@@ -3,3 +3,5 @@
 *.tar
 
 node_modules/
+
+yarn.lock
