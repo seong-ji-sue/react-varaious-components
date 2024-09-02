@@ -2,8 +2,9 @@ import React from 'react';
 import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import {createRoot} from 'react-dom/client';
 import {GlobalStyle} from '@jsproject/common';
-import InputSelectField from './components/InputSelectField';
+import InputSelectField from './components/Contents/InputSelectField';
 import FieldTest from './pages/FieldTest';
+import Layout from './components/Layout/Layout';
 
 const router = createBrowserRouter([
 	{
@@ -12,7 +13,11 @@ const router = createBrowserRouter([
 	},
 	{
 		path: '/input-select',
-		element: <FieldTest />,
+		element: (
+			<Layout>
+				<FieldTest />
+			</Layout>
+		),
 	},
 ]);
 
