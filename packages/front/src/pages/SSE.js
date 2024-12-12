@@ -33,7 +33,7 @@ function SSE(props) {
 
 	return (
 		<div>
-			<h1>Server-Sent Events</h1>
+			<h1 className={'bg-amber-100'}>Server-Sent Events</h1>
 			<button onClick={disconnectSSE} disabled={!isConnected}>
 				Disconnect SSE
 			</button>{' '}

@@ -5,6 +5,7 @@ import {GlobalStyle} from '@jsproject/common';
 import Layout from './components/Layout/Layout';
 import Webhooks from './pages/Webhooks';
 import SSE from './pages/SSE';
+import Tailwind from './pages/Tailwind';
 
 const router = createBrowserRouter([
 	{
@@ -32,6 +33,14 @@ const router = createBrowserRouter([
 		element: (
 			<Layout>
 				<SSE />
+			</Layout>
+		),
+	},
+	{
+		path: '/tailwind',
+		element: (
+			<Layout>
+				<Tailwind />
 			</Layout>
 		),
 	},
