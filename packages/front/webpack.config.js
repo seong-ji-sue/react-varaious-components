@@ -1,9 +1,7 @@
-
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = () => {
-
 	const common = {
 		mode: `development`,
 		entry: './src/index.js',
@@ -13,14 +11,14 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:3000/',
+			publicPath: 'http://localhost:4000/',
 			clean: true,
 		},
-		devtool : 'source-map',
-		devServer : {
+		devtool: 'source-map',
+		devServer: {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 3000,
+			port: 4000,
 			open: true,
 			historyApiFallback: true,
 			headers: {

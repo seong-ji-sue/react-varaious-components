@@ -2,7 +2,7 @@
   "name": "@jsproject/front",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "webpack-dev-server --mode development"
   },
@@ -14,15 +14,13 @@
     "css-loader": "^7.1.2",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
+    "react-datepicker": "^4.17.0",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.0",
     "style-loader": "^4.0.0",
     "styled-components": "^6.1.11",
-    "url-loader": "^4.1.1",
-    "date-fns": "^2.30.0",
-    "dayjs": "^1.11.9",
-    "react-datepicker": "^4.17.0"
+    "url-loader": "^4.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
