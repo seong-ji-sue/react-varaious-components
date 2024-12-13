@@ -6,22 +6,16 @@ import Layout from './components/Layout/Layout';
 import Webhooks from './pages/Webhooks';
 import SSE from './pages/SSE';
 import Tailwind from './pages/Tailwind';
+import {urlPath} from './utils/url';
 
 const router = createBrowserRouter([
 	{
-		path: '/',
+		path: urlPath.base,
 		element: <Layout>메인페이지</Layout>,
 	},
+
 	{
-		path: '/test',
-		element: (
-			<Layout>
-				<div>test</div>
-			</Layout>
-		),
-	},
-	{
-		path: '/webhooks',
+		path: urlPath.webhooks,
 		element: (
 			<Layout>
 				<Webhooks />
@@ -29,7 +23,7 @@ const router = createBrowserRouter([
 		),
 	},
 	{
-		path: '/sse',
+		path: urlPath.sse,
 		element: (
 			<Layout>
 				<SSE />
