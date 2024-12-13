@@ -2,16 +2,24 @@ import React from 'react';
 import styled from 'styled-components';
 import Header from './Header';
 import Nav from './Nav';
+import PropTypes from 'prop-types';
+import {useNavigate} from 'react-router-dom';
 
 function Layout({children}) {
+	const navigate = useNavigate();
 	return (
 		<GridContainer>
 			<Header />
-			<Nav />
+			<Nav navigate={navigate} />
 			<ContentContainer>{children}</ContentContainer>
 		</GridContainer>
 	);
 }
+
+Layout.propTypes = {
+	children: PropTypes.element.isRequired,
+	navigate: PropTypes.func,
+};
 
 export default Layout;
 
