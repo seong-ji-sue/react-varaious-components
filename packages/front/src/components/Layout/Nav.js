@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
 import styled from 'styled-components';
-import {message} from '../../utils/message';
-import {urlPath} from '../../utils/url';
 import PropTypes from 'prop-types';
 import {useLocation} from 'react-router-dom';
+import {message} from '@jsproject/common/src/utils/message';
+import {urlPath} from '@jsproject/common/src/utils/url';
 import {
 	GREY,
 	LIGHT_GREY,
@@ -11,7 +11,7 @@ import {
 	SIZE_16,
 	SIZE_8,
 	WHITE,
-} from '../../utils/color';
+} from '@jsproject/common/src/utils/color';
 
 export const navItems = [
 	{
@@ -27,6 +27,11 @@ export const navItems = [
 	{
 		label: message.menu.sse,
 		url: urlPath.sse,
+		subItems: [],
+	},
+	{
+		label: message.menu.tailwind,
+		url: urlPath.tailwind,
 		subItems: [],
 	},
 ];

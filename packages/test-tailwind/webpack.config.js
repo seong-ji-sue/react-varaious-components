@@ -13,14 +13,14 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4000/',
+			publicPath: 'http://localhost:4002/',
 			clean: true,
 		},
 		devtool: 'source-map',
 		devServer: {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4000,
+			port: 4002,
 			open: true,
 			historyApiFallback: true,
 			headers: {
@@ -50,7 +50,7 @@ module.exports = () => {
 				},
 				{
 					test: /\.css$/,
-					use: ['style-loader', 'css-loader', 'sass-loader'],
+					use: ['style-loader', 'css-loader', 'postcss-loader'],
 				},
 				{
 					test: /\.(jpg|png|svg)$/,
@@ -69,10 +69,10 @@ module.exports = () => {
 				template: 'public/index.html',
 			}),
 			new ModuleFederationPlugin({
-				name: 'main',
+				name: 'admin',
 				filename: 'remoteEntry.js',
-				remotes: {
-					admin: `admin@${'http://localhost:4002'}/remoteEntry.js`,
+				exposes: {
+					'./Tailwind': './src/Page.js',
 				},
 				shared: {},
 			}),
