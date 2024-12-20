@@ -22,7 +22,11 @@
     "react-router-dom": "^6.26.0",
     "style-loader": "^4.0.0",
     "styled-components": "^6.1.11",
-    "url-loader": "^4.1.1"
+    "url-loader": "^4.1.1",
+    "tailwindcss": "^3.4.16",
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20",
+    "postcss-loader": "^8.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
