@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  varaious-page:
+    image: varaious-page:latest
+    container_name: varaious-page
+    ports:
+      - "4002:4002"
+    env_file:
+      - path: config/.env.production
+        required : true
+
+

@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  varaious-app:
+    image: varaious-app:latest
+    container_name: varaious-app
+    ports:
+      - "4000:4000"
+    env_file:
+      - path: config/.env.production
+        required: true
+
+

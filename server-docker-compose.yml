@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  varaious-server:
+    image: varaious-server:latest
+    container_name: varaious-server
+    ports:
+      - "4001:4001"
+    # restart: always
+    env_file:
+      - path: ./config/.env.production
+        required: true
+
+
