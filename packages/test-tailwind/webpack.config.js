@@ -63,7 +63,7 @@ module.exports = () => {
 				template: 'public/index.html',
 			}),
 			new ModuleFederationPlugin({
-				name: 'admin',
+				name: 'tailwind',
 				filename: 'remoteEntry.js',
 				exposes: {
 					'./Page': './src/Page.js',

@@ -24,6 +24,11 @@ export const navItems = [
 		url: urlPath.tailwind,
 		subItems: [],
 	},
+	{
+		label: message.menu.mui,
+		url: urlPath.mui,
+		subItems: [],
+	},
 ];
 
 function Nav({navigate}) {

@@ -18,7 +18,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4000/',
+			publicPath: 'http://localhost:4002/',
 			clean: true,
 		},
 		module: {
@@ -44,7 +44,7 @@ module.exports = () => {
 				},
 				{
 					test: /\.css$/,
-					use: ['style-loader', 'css-loader', 'postcss-loader'],
+					use: ['style-loader', 'css-loader'],
 				},
 				{
 					test: /\.(jpg|png|svg)$/,
@@ -63,11 +63,10 @@ module.exports = () => {
 				template: 'public/index.html',
 			}),
 			new ModuleFederationPlugin({
-				name: 'main',
+				name: 'mui',
 				filename: 'remoteEntry.js',
-				remotes: {
-					tailwind: `tailwind@${'http://localhost:4001'}/remoteEntry.js`,
-					mui: `mui@${'http://localhost:4002'}/remoteEntry.js`,
+				exposes: {
+					'./Page': './src/Page.js',
 				},
 				shared: {
 					react: {
@@ -89,7 +88,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4000,
+			port: 4002,
 			open: true,
 			historyApiFallback: true,
 			headers: {
