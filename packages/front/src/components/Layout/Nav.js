@@ -20,18 +20,8 @@ export const navItems = [
 		subItems: [],
 	},
 	{
-		label: message.menu.webhooks,
-		url: urlPath.webhooks,
-		subItems: [],
-	},
-	{
-		label: message.menu.sse,
-		url: urlPath.sse,
-		subItems: [],
-	},
-	{
-		label: message.menu.tailwind,
-		url: urlPath.tailwind,
+		label: message.menu.test,
+		url: urlPath.test,
 		subItems: [],
 	},
 ];

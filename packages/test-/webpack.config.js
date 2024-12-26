@@ -44,7 +44,7 @@ module.exports = () => {
 				},
 				{
 					test: /\.css$/,
-					use: ['style-loader', 'css-loader', 'postcss-loader'],
+					use: ['style-loader', 'css-loader'],
 				},
 				{
 					test: /\.(jpg|png|svg)$/,
@@ -66,8 +66,7 @@ module.exports = () => {
 				name: 'admin',
 				filename: 'remoteEntry.js',
 				exposes: {
-					'./Tailwind': './src/Page.js',
-					'./styles': './src/index.css',
+					'./TestPage': './src/TestPage.js',
 				},
 				shared: {},
 			}),
