@@ -3,7 +3,7 @@ import cors from 'cors';
 import {testFunc} from '@jsproject/common';
 
 const app = express();
-const port = 4001;
+const port = 5000;
 
 app.use(cors({origin: '*', credentials: true}));
 

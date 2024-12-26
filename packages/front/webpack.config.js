@@ -66,7 +66,7 @@ module.exports = () => {
 				name: 'main',
 				filename: 'remoteEntry.js',
 				remotes: {
-					admin: `admin@${'http://localhost:4002'}/remoteEntry.js`,
+					tailwind: `admin@${'http://localhost:4001'}/remoteEntry.js`,
 				},
 				shared: {},
 			}),
