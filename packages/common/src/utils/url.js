@@ -1,4 +1,4 @@
 export const urlPath = {
 	base: '/',
-	test: '/test',
+	tailwind: '/tailwind',
 };

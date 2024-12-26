@@ -5,7 +5,7 @@ import {GlobalStyle} from '@jsproject/common';
 import Layout from './components/Layout/Layout';
 import {urlPath} from '@jsproject/common/src/utils/url';
 
-const TestPage = React.lazy(() => import('admin/TestPage'));
+const Tailwind = React.lazy(() => import('admin/Tailwind'));
 
 const router = createBrowserRouter([
 	{
@@ -13,11 +13,11 @@ const router = createBrowserRouter([
 		element: <Layout>메인페이지</Layout>,
 	},
 	{
-		path: urlPath.test,
+		path: urlPath.tailwind,
 		element: (
 			<Layout>
 				<Suspense>
-					<TestPage />
+					<Tailwind />
 				</Suspense>
 			</Layout>
 		),

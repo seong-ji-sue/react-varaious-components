@@ -20,8 +20,8 @@ export const navItems = [
 		subItems: [],
 	},
 	{
-		label: message.menu.test,
-		url: urlPath.test,
+		label: message.menu.tailwind,
+		url: urlPath.tailwind,
 		subItems: [],
 	},
 ];
