@@ -1,32 +1,106 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import {Stack, TextField} from '@mui/material';
+import {Button, InputLabel, Select, Stack, TextField} from '@mui/material';
 import {FormProvider, useForm} from 'react-hook-form';
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
+import TextBox from './TextBox';
+import SelectBox from './SelectBox';
+import SelectSearchBox from './SelectSearchBox';
 
-const formData = [
-	{id: 'id', label: 'ID', placeholder: 'id를 입력하세요'},
-	{id: 'name', label: 'Name', placeholder: 'name를 입력하세요'},
+export const formTypes = {
+	text: 'text',
+	textarea: 'textarea',
+	number: 'number',
+	selectSingle: 'single',
+	selectMultiple: 'multiple',
+	selectSearch: 'multiple',
+	selectGroup: 'group',
+};
+
+const textBoxFormData = [
+	{type: formTypes.text, id: 'id', label: 'ID', placeholder: 'id를 입력하세요'},
+	{
+		type: formTypes.number,
+		id: 'version',
+		label: 'version',
+		placeholder: 'version를 입력하세요',
+	},
+	{
+		type: formTypes.textarea,
+		id: 'description',
+		label: 'description',
+		placeholder: 'description 입력하세요',
+	},
 ];
 
-//알파벳(a-zA-Z), 숫자(0-9)
-export const rEngNum = /^[a-zA-Z0-9]*$/;
+const selectBoxFormData = [
+	{
+		type: formTypes.selectSingle,
+		id: 'entityType1',
+		label: 'Entity Type',
+		placeholder: 'type 를 입력하세요',
+		options: [
+			{value: '0', label: 'Create'},
+			{value: '1', label: 'Update'},
+			{value: '2', label: 'Delete'},
+		],
+	},
+	{
+		type: formTypes.selectMultiple,
+		id: 'entityType2',
+		label: 'Entity Type',
+		placeholder: 'type 를 입력하세요',
+		options: [
+			{value: '0', label: 'Create'},
+			{value: '1', label: 'Update'},
+			{value: '2', label: 'Delete'},
+		],
+	},
+	{
+		type: formTypes.selectGroup,
+		id: 'entityType3',
+		label: 'Entity Type',
+		placeholder: 'type 를 입력하세요',
+		options: [
+			{
+				label: 'Group1',
+				subOptions: [
+					{value: '0', label: 'Create1'},
+					{value: '1', label: 'Update1'},
+				],
+			},
+			{
+				label: 'Group2',
+				subOptions: [
+					{value: '2', label: 'Create2'},
+					{value: '3', label: 'Update2'},
+				],
+			},
+		],
+	},
+];
 
 const schema = yup.object().shape({
 	id: yup
 		.string()
 		.trim()
 		.max(10, '10글자 내에 입력하세요')
-		.matches(rEngNum, '유효성을 다시 체크하세요'),
-	name: yup
+		.required('필수 입력입니다.'),
+	version: yup
+		.number()
+		.transform((v, o) => (o === '' ? null : v))
+		.min(2, '2 이상 입력하세요')
+		.max(10, '10 미만 입력하세요')
+		.required('필수 입력입니다.'),
+	description: yup
 		.string()
 		.trim()
-		.max(10, '10글자 내에 입력하세요')
-		.matches(rEngNum, '유효성을 다시 체크하세요'),
+		.max(2048, '2048글자 내에 입력하세요')
+		.required('필수 입력입니다.'),
+	entityType1: yup.string().required('필수 입력입니다.'),
 });
 
-function FieldEx(props) {
+function FieldEx() {
 	const methods = useForm({
 		resolver: yupResolver(schema),
 	});
@@ -38,30 +112,25 @@ function FieldEx(props) {
 	} = methods;
 
 	const onSubmit = (data) => {
-		console.log('Form Data:', data);
+		alert('Form Data: ' + JSON.stringify(data, null, 2));
 	};
 
 	return (
 		<FormProvider {...methods}>
-			<Stack direction='row' spacing={2}>
-				{formData.map(({id, label, placeholder}, index) => {
-					return (
-						<TextField
-							{...register(id)}
-							key={index}
-							label={label}
-							variant={'outlined'}
-							placeholder={placeholder}
-							error={!!errors.firstName}
-							helperText={errors.firstName?.message}
-						/>
-					);
-				})}
-			</Stack>
+			<form onSubmit={handleSubmit(onSubmit)}>
+				<Stack spacing={2}>
+					<Button variant='default' type='submit'>
+						필드 검사
+					</Button>
+					<Stack spacing={2}>
+						<TextBox formData={textBoxFormData} />
+						<SelectBox formData={selectBoxFormData} />
+						<SelectSearchBox />
+					</Stack>
+				</Stack>
+			</form>
 		</FormProvider>
 	);
 }
-
-FieldEx.propTypes = {};
 
 export default FieldEx;
