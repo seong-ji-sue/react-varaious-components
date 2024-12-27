@@ -5,6 +5,7 @@ import {
 	Box,
 	Checkbox,
 	FormControl,
+	FormHelperText,
 	InputLabel,
 	ListItemText,
 	ListSubheader,
@@ -36,7 +37,12 @@ function SelectBox({formData}) {
 					});
 				};
 				return (
-					<FormControl key={index} size='small' sx={{width: '200px'}}>
+					<FormControl
+						key={index}
+						size='small'
+						sx={{width: '200px'}}
+						error={!!errors[id]}
+					>
 						<InputLabel color={'success'} variant='outlined'>
 							{label}
 						</InputLabel>
@@ -100,6 +106,9 @@ function SelectBox({formData}) {
 							</Select>
 						) : (
 							<div></div>
+						)}
+						{errors[id] && (
+							<FormHelperText>{errors[id].message}</FormHelperText>
 						)}
 					</FormControl>
 				);
