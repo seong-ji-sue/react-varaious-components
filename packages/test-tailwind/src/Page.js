@@ -1,8 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import TextBox from './TextBox';
 
 function Page(props) {
-	return <div className='text-7xl text-center mt-10'>Tailwind 페이지</div>;
+	return (
+		<div>
+			<h2>동적 스타일링 테스트</h2>
+			<TextBox />
+		</div>
+	);
 }
 
 Page.propTypes = {};
