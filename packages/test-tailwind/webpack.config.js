@@ -18,7 +18,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4002/',
+			publicPath: 'http://localhost:4001/',
 			clean: true,
 		},
 		module: {
@@ -63,13 +63,24 @@ module.exports = () => {
 				template: 'public/index.html',
 			}),
 			new ModuleFederationPlugin({
-				name: 'admin',
+				name: 'tailwind',
 				filename: 'remoteEntry.js',
 				exposes: {
-					'./Tailwind': './src/Page.js',
+					'./Page': './src/Page.js',
 					'./styles': './src/index.css',
 				},
-				shared: {},
+				shared: {
+					react: {
+						singleton: true,
+						eager: true,
+						// requiredVersion: deps.react,
+					},
+					'react-dom': {
+						singleton: true,
+						eager: true,
+						requiredVersion: deps['react-dom'],
+					},
+				},
 			}),
 		],
 	};
@@ -78,7 +89,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4002,
+			port: 4001,
 			open: true,
 			historyApiFallback: true,
 			headers: {

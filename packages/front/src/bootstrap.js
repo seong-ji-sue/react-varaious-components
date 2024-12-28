@@ -5,7 +5,7 @@ import {GlobalStyle} from '@jsproject/common';
 import Layout from './components/Layout/Layout';
 import {urlPath} from '@jsproject/common/src/utils/url';
 
-const Tailwind = React.lazy(() => import('admin/Tailwind'));
+const Tailwind = React.lazy(() => import('tailwind/Page'));
 
 const router = createBrowserRouter([
 	{

@@ -66,9 +66,20 @@ module.exports = () => {
 				name: 'main',
 				filename: 'remoteEntry.js',
 				remotes: {
-					admin: `admin@${'http://localhost:4002'}/remoteEntry.js`,
+					tailwind: `tailwind@${'http://localhost:4001'}/remoteEntry.js`,
 				},
-				shared: {},
+				shared: {
+					react: {
+						singleton: true,
+						eager: true,
+						// requiredVersion: deps.react,
+					},
+					'react-dom': {
+						singleton: true,
+						eager: true,
+						requiredVersion: deps['react-dom'],
+					},
+				},
 			}),
 		],
 	};

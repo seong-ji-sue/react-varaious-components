@@ -18,7 +18,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4002/',
+			publicPath: 'http://localhost:6002/',
 			clean: true,
 		},
 		module: {
@@ -77,7 +77,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4002,
+			port: 6002,
 			open: true,
 			historyApiFallback: true,
 			headers: {

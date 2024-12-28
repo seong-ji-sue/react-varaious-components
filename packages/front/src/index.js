@@ -1,2 +1,2 @@
 import('./bootstrap');
-import('admin/styles');
+import('tailwind/styles');
