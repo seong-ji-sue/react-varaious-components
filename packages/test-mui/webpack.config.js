@@ -67,6 +67,7 @@ module.exports = () => {
 				filename: 'remoteEntry.js',
 				exposes: {
 					'./Page': './src/Page.js',
+					'./ExPage': './src/ExPage.js',
 				},
 				shared: {
 					react: {

@@ -29,6 +29,11 @@ export const navItems = [
 		url: urlPath.mui,
 		subItems: [],
 	},
+	{
+		label: message.menu.muiEx,
+		url: urlPath.muiEx,
+		subItems: [],
+	},
 ];
 
 function Nav({navigate}) {
@@ -38,9 +43,9 @@ function Nav({navigate}) {
 	const renderSubItems = (items, parentKey) => {
 		return items.map((item) => {
 			const isSelected =
-				item.subItems?.length || item.url === urlPath.base
+				item.url === urlPath.base
 					? pathname === item.url
-					: pathname.startsWith(item.url);
+					: pathname === item.url || pathname.startsWith(`${item.url}/`);
 			return (
 				<_NavItem key={`nav-${item.label}`}>
 					<_NavMenu $isSelected={isSelected} onClick={() => navigate(item.url)}>

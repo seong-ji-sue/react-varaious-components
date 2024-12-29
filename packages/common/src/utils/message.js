@@ -3,5 +3,6 @@ export const message = {
 		main: 'main',
 		tailwind: 'tailwind',
 		mui: 'mui',
+		muiEx: 'mui-ex',
 	},
 };

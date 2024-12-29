@@ -6,15 +6,18 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import TextBox from './TextBox';
 import SelectBox from './SelectBox';
 import SelectSearchBox from './SelectSearchBox';
+import TextChipBox from './TextChipBox';
 
 export const formTypes = {
 	text: 'text',
+	textChip: 'textChip',
 	textarea: 'textarea',
 	number: 'number',
 	selectSingle: 'single',
 	selectMultiple: 'multiple',
 	selectSearch: 'multiple',
 	selectGroup: 'group',
+	autocomplete: 'autocomplete',
 };
 
 const textBoxFormData = [
@@ -80,6 +83,29 @@ const selectBoxFormData = [
 	},
 ];
 
+const selectSearchFormData = [
+	{
+		type: 'autocomplete',
+		id: 'entityType4',
+		label: 'Entity Type',
+		placeholder: 'type 를 입력하세요',
+		options: [
+			{value: '0', label: 'Create'},
+			{value: '1', label: 'Update'},
+			{value: '2', label: 'Delete'},
+		],
+	},
+];
+
+const textChipFormData = [
+	{
+		type: formTypes.textChip,
+		id: 'textChip',
+		label: 'type 를 입력하세요',
+		placeholder: 'Type and press Enter',
+	},
+];
+
 const schema = yup.object().shape({
 	id: yup
 		.string()
@@ -124,8 +150,9 @@ function FieldEx() {
 					</Button>
 					<Stack spacing={2}>
 						<TextBox formData={textBoxFormData} />
+						<TextChipBox formData={textChipFormData} />
 						<SelectBox formData={selectBoxFormData} />
-						<SelectSearchBox />
+						<SelectSearchBox formData={selectSearchFormData} />
 					</Stack>
 				</Stack>
 			</form>

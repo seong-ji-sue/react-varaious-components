@@ -10,6 +10,7 @@ import {
 	ListItemText,
 	ListSubheader,
 	MenuItem,
+	OutlinedInput,
 	Select,
 	Stack,
 } from '@mui/material';
@@ -28,10 +29,10 @@ function SelectBox({formData}) {
 			<InputLabel>SelectBox Field</InputLabel>
 			{formData.map(({type, id, label, placeholder, options}, index) => {
 				const currentValue = getValues(id);
+				console.log(currentValue);
 
 				const handleChange = (event) => {
 					const {value} = event.target;
-					console.log(value);
 					setValue(id, type === formTypes.selectMultiple ? [...value] : value, {
 						shouldValidate: true,
 					});
@@ -67,6 +68,7 @@ function SelectBox({formData}) {
 								label={label}
 								multiple
 								value={currentValue || []}
+								input={<OutlinedInput label={label} />}
 								onChange={handleChange}
 								renderValue={(selected) => {
 									if (!selected || selected.length === 0) return '';

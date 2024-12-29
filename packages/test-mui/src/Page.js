@@ -3,6 +3,8 @@ import ButtonEx from '../component/ButtonEx';
 import {Container, ThemeProvider, Typography} from '@mui/material';
 import theme from './theme';
 import FieldEx from '../component/FieldEx';
+import AlertEx from '../component/AlertEx';
+import TableEx from '../component/TableEx';
 function Page(props) {
 	return (
 		<ThemeProvider theme={theme}>
@@ -11,6 +13,10 @@ function Page(props) {
 				<ButtonEx />
 				<Typography variant={'h6'}>필드</Typography>
 				<FieldEx />
+				<Typography variant={'h6'}>알림창</Typography>
+				<AlertEx />
+				<Typography variant={'h6'}>테이블</Typography>
+				<TableEx />
 			</Container>
 		</ThemeProvider>
 	);

@@ -7,6 +7,7 @@ import {urlPath} from '@jsproject/common/src/utils/url';
 
 const Tailwind = React.lazy(() => import('tailwind/Page'));
 const Mui = React.lazy(() => import('mui/Page'));
+const MuiEx = React.lazy(() => import('mui/ExPage'));
 
 const router = createBrowserRouter([
 	{
@@ -29,6 +30,16 @@ const router = createBrowserRouter([
 			<Layout>
 				<Suspense>
 					<Mui />
+				</Suspense>
+			</Layout>
+		),
+	},
+	{
+		path: urlPath.muiEx,
+		element: (
+			<Layout>
+				<Suspense>
+					<MuiEx />
 				</Suspense>
 			</Layout>
 		),
