@@ -123,7 +123,6 @@ const schema = yup.object().shape({
 		.trim()
 		.max(2048, '2048글자 내에 입력하세요')
 		.required('필수 입력입니다.'),
-	entityType1: yup.string().required('필수 입력입니다.'),
 });
 
 function FieldEx() {

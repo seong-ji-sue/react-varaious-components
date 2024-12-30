@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {Button, Stack, Alert, AlertTitle, Box} from '@mui/material';
 import {keyframes} from '@emotion/react';
 
+//보이고 이후 위로 사라짐
 const fadeOutUp = keyframes`
   0% {
     opacity: 1;
@@ -19,10 +20,10 @@ function AlertEx() {
 	const [isFading, setIsFading] = useState(false);
 
 	const handleShowAlert = (type) => {
-		setIsFading(false);
+		setIsFading(false); //알림표시
 		setAlertType(type);
-		setTimeout(() => setIsFading(true), 2500); // Start fade-out after 2.5 seconds
-		setTimeout(() => setAlertType(null), 3000); // Remove alert after 3 seconds
+		setTimeout(() => setIsFading(true), 2500); //2.5초 후 사라지는 애니메이션 적용
+		setTimeout(() => setAlertType(null), 3000); //상태 초기화
 	};
 
 	return (
@@ -40,7 +41,7 @@ function AlertEx() {
 						maxWidth: '90%',
 						borderRadius: 1,
 						boxShadow: 3,
-						animation: isFading ? `${fadeOutUp} 0.5s forwards` : 'none',
+						animation: isFading ? `${fadeOutUp} 0.5s forwards` : 'none', //0.5초 동안 애니메이션 유지
 					}}
 				>
 					{alertType === 'success' && (

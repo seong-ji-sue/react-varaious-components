@@ -8,7 +8,7 @@
     "start": "yarn lerna run start --stream",
     "build": "yarn lerna run build",
     "run-server": "yarn workspace @jsproject/server run run",
-    "run-page": "yarn workspace @jsproject/test-tailwind run run",
+    "run-page": "yarn workspace @jsproject/test-mui run run",
     "run-app": "yarn workspace @jsproject/front run run"
   },
   "dependencies": {
