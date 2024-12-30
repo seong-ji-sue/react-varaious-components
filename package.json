@@ -8,12 +8,12 @@
     "start": "yarn lerna run start --stream",
     "build": "yarn lerna run build",
     "run-server": "yarn workspace @jsproject/server run run",
-    "run-page": "yarn workspace @jsproject/test-tailwind run run",
+    "run-page": "yarn workspace @jsproject/test-mui run run",
     "run-app": "yarn workspace @jsproject/front run run"
   },
   "dependencies": {
     "axios": "^1.7.2",
-    "dayjs": "^1.11.11",
+    "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "dotenv-webpack": "^8.1.0",
     "lodash-es": "^4.17.21",
