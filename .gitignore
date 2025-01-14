@@ -1,5 +1,11 @@
 .idea
 .idea/*.xml
 *.tar
+packages/front/dist
+packages/test-mui/dist
+packages/test-tailwind/dist
+
+config
+yarn.lock
 
 node_modules/
