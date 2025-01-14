@@ -105,6 +105,7 @@ module.exports = () => {
 			}),
 		],
 	};
+
 	if (isAnalyze) {
 		const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 		common.plugins.push(

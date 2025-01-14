@@ -4,7 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const deps = require('./package.json').dependencies;
 const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
-const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+
+const isAnalyze = process.env.ANALYZE === 'true'; // 번들 분석 여부
 
 module.exports = () => {
 	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
@@ -85,11 +86,19 @@ module.exports = () => {
 					},
 				},
 			}),
-			new BundleAnalyzerPlugin({
-				analyzerMode: process.env.ANALYZE ? 'static' : 'disabled',
-			}),
 		],
 	};
+
+	if (isAnalyze) {
+		const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+		common.plugins.push(
+			new BundleAnalyzerPlugin({
+				analyzerMode: 'static',
+				reportFilename: 'bundle-report.html',
+				openAnalyzer: true,
+			}),
+		);
+	}
 	if (process.env.NODE_ENV === 'development') {
 		common.devtool = 'source-map';
 		common.devServer = {
