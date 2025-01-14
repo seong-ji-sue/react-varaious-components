@@ -4,7 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const deps = require('./package.json').dependencies;
 const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
-const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+
+const isAnalyze = process.env.ANALYZE === 'true'; // 번들 분석 여부
 
 module.exports = () => {
 	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
@@ -18,9 +19,26 @@ module.exports = () => {
 		},
 		output: {
 			path: path.resolve(__dirname, 'dist'),
-			filename: 'app.js',
+			filename: '[name].[contenthash].js', // 각 청크에 고유 이름 부여
+			chunkFilename: '[name].[contenthash].chunk.js', // 코드 스플리팅된 파일의 이름
 			publicPath: 'http://localhost:4002/',
 			clean: true,
+		},
+		optimization: {
+			splitChunks: {
+				chunks: 'all',
+				minSize: 30000, // 최소 청크 크기
+				maxSize: 100000, // 최대 청크 크기
+				cacheGroups: {
+					vendors: {
+						test: /[\\/]node_modules[\\/]/,
+						name: 'vendors',
+						chunks: 'all',
+						priority: -10,
+					},
+				},
+			},
+			runtimeChunk: 'single',
 		},
 		module: {
 			rules: [
@@ -51,10 +69,10 @@ module.exports = () => {
 				},
 				{
 					test: /\.(jpg|png|svg)$/,
-					use: {
-						loader: 'url-loader',
-						options: {
-							limit: 25000,
+					type: 'asset', // 최신 Webpack의 Asset Modules 사용
+					parser: {
+						dataUrlCondition: {
+							maxSize: 25000, // 25kb 이하 파일을 data URL로 변환
 						},
 					},
 				},
@@ -85,11 +103,19 @@ module.exports = () => {
 					},
 				},
 			}),
-			new BundleAnalyzerPlugin({
-				analyzerMode: process.env.ANALYZE ? 'static' : 'disabled',
-			}),
 		],
 	};
+	if (isAnalyze) {
+		const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+		common.plugins.push(
+			new BundleAnalyzerPlugin({
+				analyzerMode: 'static',
+				reportFilename: 'bundle-report.html',
+				openAnalyzer: true,
+			}),
+		);
+	}
+
 	if (process.env.NODE_ENV === 'development') {
 		common.devtool = 'source-map';
 		common.devServer = {

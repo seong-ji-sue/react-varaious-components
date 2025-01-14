@@ -30,6 +30,7 @@
     "react-router-dom": "^6.26.0",
     "style-loader": "^4.0.0",
     "url-loader": "^4.1.1",
+    "webpack-bundle-analyzer": "^4.10.2",
     "yup": "^1.6.1"
   },
   "devDependencies": {

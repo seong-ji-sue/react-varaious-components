@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_jsproject_test_mui=self.webpackChunk_jsproject_test_mui||[]).push([[628],{7247:(e,t,n)=>{n.r(t),n.d(t,{default:()=>c});var s=n(2668),r=n.n(s);function u(e){return r().createElement("div",null,"MUI 예시 페이지입니다. information 페이지로 구성했습니다")}u.propTypes={};const c=u}}]);
