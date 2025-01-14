@@ -1,5 +1,4 @@
 import React, {useState} from 'react';
-import PropTypes from 'prop-types';
 import {Button, Stack, Alert, AlertTitle, Box} from '@mui/material';
 import {keyframes} from '@emotion/react';
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {Button, Divider, Stack, SvgIcon} from '@mui/material';
 
 export const FilterIcon = (props) => (
