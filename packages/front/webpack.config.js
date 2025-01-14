@@ -4,13 +4,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const deps = require('./package.json').dependencies;
 const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
+const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 
 module.exports = () => {
 	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
 	console.log('WEBPACK - NODE_ENV: ----->' + process.env.NODE_ENV);
 
 	const common = {
-		mode: `development`,
+		mode: process.env.NODE_ENV,
 		entry: './src/index.js',
 		resolve: {
 			extensions: ['.js', '.jsx'],
@@ -28,7 +29,9 @@ module.exports = () => {
 					exclude: /node_modules/,
 					use: {
 						loader: 'babel-loader',
-						options: {presets: ['@babel/env', '@babel/preset-react']},
+						options: {
+							presets: ['@babel/env', '@babel/preset-react'],
+						},
 					},
 				},
 				{
@@ -81,6 +84,9 @@ module.exports = () => {
 						requiredVersion: deps['react-dom'],
 					},
 				},
+			}),
+			new BundleAnalyzerPlugin({
+				analyzerMode: process.env.ANALYZE ? 'static' : 'disabled',
 			}),
 		],
 	};

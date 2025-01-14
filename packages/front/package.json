@@ -7,7 +7,8 @@
     "start": "NODE_ENV=development webpack-dev-server --mode development",
     "build": "webpack --mode production",
     "prerun": "webpack --mode production",
-    "run": "node server.js"
+    "run": "node server.js",
+    "build-analyze": "ANALYZE=true webpack --mode production"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +23,8 @@
     "react-router-dom": "^6.26.0",
     "style-loader": "^4.0.0",
     "styled-components": "^6.1.11",
-    "url-loader": "^4.1.1"
+    "url-loader": "^4.1.1",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
