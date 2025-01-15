@@ -79,8 +79,9 @@ export default {
 		isAnalyze && analyzer({summaryOnly: true}),
 		isAnalyze &&
 			visualizer({
-				open: true, // 브라우저에서 자동으로 열기
-				generate: false, // HTML 파일을 생성하지 않음
+				filename: 'dist/bundle-report.html',
+				open: true,
+				template: 'treemap', // 트리맵 형식으로 시각화
 			}),
 	].filter(Boolean),
 	treeshake: {
