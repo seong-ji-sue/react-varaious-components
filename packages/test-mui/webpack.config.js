@@ -13,7 +13,7 @@ module.exports = () => {
 
 	const common = {
 		mode: process.env.NODE_ENV,
-		entry: './src/index.js',
+		entry: './src/main.js',
 		resolve: {
 			extensions: ['.js', '.jsx'],
 		},
