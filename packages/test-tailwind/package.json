@@ -4,10 +4,11 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "NODE_ENV=development webpack-dev-server --mode development",
+    "start": "NODE_ENV=development webpack-dev-server --mode development --no-open",
     "build": "webpack --mode production",
     "prerun": "webpack --mode production",
-    "run": "node server.js"
+    "run": "node server.js",
+    "build-analyze": "ANALYZE=true webpack --mode production"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
     "@jsproject/common": "^1.0.0",
     "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^3.6.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "autoprefixer": "^10.4.20",
     "css-loader": "^7.1.2",
     "postcss": "^8.4.49",

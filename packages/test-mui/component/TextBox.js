@@ -2,7 +2,6 @@ import React from 'react';
 import {InputLabel, Stack, TextField} from '@mui/material';
 import {formTypes} from './FieldEx';
 import {useFormContext} from 'react-hook-form';
-import Page from '../src/Page';
 import PropTypes from 'prop-types';
 
 function TextBox({formData}) {

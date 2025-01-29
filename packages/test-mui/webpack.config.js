@@ -5,12 +5,14 @@ const deps = require('./package.json').dependencies;
 const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
 
+const isAnalyze = process.env.ANALYZE === 'true'; // 번들 분석 여부
+
 module.exports = () => {
 	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
 	console.log('WEBPACK - NODE_ENV: ----->' + process.env.NODE_ENV);
 
 	const common = {
-		mode: `development`,
+		mode: process.env.NODE_ENV,
 		entry: './src/index.js',
 		resolve: {
 			extensions: ['.js', '.jsx'],
@@ -18,7 +20,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4002/',
+			publicPath: `${process.env.MUI_TEST_SERVER_URL}/`,
 			clean: true,
 		},
 		module: {
@@ -28,7 +30,9 @@ module.exports = () => {
 					exclude: /node_modules/,
 					use: {
 						loader: 'babel-loader',
-						options: {presets: ['@babel/env', '@babel/preset-react']},
+						options: {
+							presets: ['@babel/env', '@babel/preset-react'],
+						},
 					},
 				},
 				{
@@ -84,12 +88,24 @@ module.exports = () => {
 			}),
 		],
 	};
+
+	if (isAnalyze) {
+		const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+		common.plugins.push(
+			new BundleAnalyzerPlugin({
+				analyzerMode: 'static',
+				reportFilename: 'bundle-report.html',
+				openAnalyzer: true,
+			}),
+		);
+	}
+
 	if (process.env.NODE_ENV === 'development') {
 		common.devtool = 'source-map';
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4002,
+			port: process.env.MUI_TEST_SERVER_PORT,
 			open: true,
 			historyApiFallback: true,
 			headers: {
