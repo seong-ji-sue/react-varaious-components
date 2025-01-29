@@ -20,7 +20,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4000/',
+			publicPath: `${process.env.FRONT_SERVER_URL}/`,
 			clean: true,
 		},
 		module: {
@@ -70,8 +70,8 @@ module.exports = () => {
 				name: 'main',
 				filename: 'remoteEntry.js',
 				remotes: {
-					tailwind: `tailwind@${'http://localhost:4001'}/remoteEntry.js`,
-					mui: `mui@${'http://localhost:4002'}/remoteEntry.js`,
+					tailwind: `tailwind@${process.env.TAILWIND_TEST_SERVER_URL}/remoteEntry.js`,
+					mui: `mui@${process.env.MUI_TEST_SERVER_URL}/remoteEntry.js`,
 				},
 				shared: {
 					react: {
@@ -104,7 +104,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4000,
+			port: process.env.FRONT_SERVER_PORT,
 			open: true,
 			historyApiFallback: true,
 			headers: {

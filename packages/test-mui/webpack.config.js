@@ -20,7 +20,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4002/',
+			publicPath: `${process.env.MUI_TEST_SERVER_URL}/`,
 			clean: true,
 		},
 		module: {
@@ -105,7 +105,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4002,
+			port: process.env.MUI_TEST_SERVER_PORT,
 			open: true,
 			historyApiFallback: true,
 			headers: {

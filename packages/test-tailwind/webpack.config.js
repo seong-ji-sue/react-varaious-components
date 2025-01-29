@@ -20,7 +20,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: 'http://localhost:4001/',
+			publicPath: `${process.env.TAILWIND_TEST_SERVER_URL}/`,
 			clean: true,
 		},
 		module: {
@@ -102,7 +102,7 @@ module.exports = () => {
 		common.devServer = {
 			server: 'http',
 			host: '0.0.0.0',
-			port: 4001,
+			port: process.env.TAILWIND_TEST_SERVER_PORT,
 			open: true,
 			historyApiFallback: true,
 			headers: {
