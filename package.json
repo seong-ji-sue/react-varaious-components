@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "yarn lerna run start --stream",
+    "start": "yarn lerna run start --stream --ignore @jsproject/test-basic",
     "build": "yarn lerna run build",
     "run-server": "yarn workspace @jsproject/server run run",
     "run-page": "yarn workspace @jsproject/test-mui run run",

@@ -5,7 +5,6 @@ packages/front/dist
 packages/test-mui/dist
 packages/test-tailwind/dist
 
-config
 yarn.lock
 
 node_modules/
