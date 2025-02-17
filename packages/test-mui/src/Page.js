@@ -1,11 +1,11 @@
 import React from 'react';
-import ButtonEx from '../component/ButtonEx';
+import ButtonEx from './component/ButtonEx';
 import {Container, ThemeProvider, Typography} from '@mui/material';
 import theme from './theme';
-import FieldEx from '../component/FieldEx';
-import AlertEx from '../component/AlertEx';
-import TableEx from '../component/TableEx';
-import DynamicLayoutEx from '../component/DynamicLayoutEx';
+import FieldEx from './component/FieldEx';
+import AlertEx from './component/AlertEx';
+import TableEx from './component/TableEx';
+import DynamicLayoutEx from './component/DynamicLayoutEx';
 function Page(props) {
 	return (
 		<ThemeProvider theme={theme}>
