@@ -9,9 +9,6 @@
     "src"
   ],
 
-  "scripts": {},
-  "exports": {
-    "./common" : "./src/index.js"
-  }
+  "scripts": {}
 }
 

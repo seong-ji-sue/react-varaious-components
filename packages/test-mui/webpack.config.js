@@ -10,7 +10,7 @@ const isAnalyze = process.env.ANALYZE === 'true'; // 번들 분석 여부
 module.exports = () => {
 	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
 	console.log('WEBPACK - NODE_ENV: ----->' + process.env.NODE_ENV);
-
+	console.log('WEBPACK - NODE_ENV: ----->' + process.env.MUI_TEST_SERVER_URL);
 	const common = {
 		mode: process.env.NODE_ENV,
 		entry: './src/index.js',

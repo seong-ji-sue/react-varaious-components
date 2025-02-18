@@ -63,12 +63,23 @@ module.exports = () => {
 				template: 'public/index.html',
 			}),
 			new ModuleFederationPlugin({
-				name: 'admin',
+				name: 'diff',
 				filename: 'remoteEntry.js',
 				exposes: {
 					'./TestPage': './src/Page.js',
 				},
-				shared: {},
+				shared: {
+					react: {
+						singleton: true,
+						eager: true,
+						// requiredVersion: deps.react,
+					},
+					'react-dom': {
+						singleton: true,
+						eager: true,
+						requiredVersion: deps['react-dom'],
+					},
+				},
 			}),
 		],
 	};

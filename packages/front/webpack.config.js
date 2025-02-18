@@ -72,6 +72,7 @@ module.exports = () => {
 				remotes: {
 					tailwind: `tailwind@${process.env.TAILWIND_TEST_SERVER_URL}/remoteEntry.js`,
 					mui: `mui@${process.env.MUI_TEST_SERVER_URL}/remoteEntry.js`,
+					diff: `mui@${process.env.DIFF_TEST_SERVER_URL}/remoteEntry.js`,
 				},
 				shared: {
 					react: {
