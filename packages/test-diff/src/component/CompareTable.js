@@ -5,7 +5,7 @@ import {
 	flexRender,
 } from '@tanstack/react-table';
 
-// 좌측 데이터 (수정 가능한 데이터)
+// 초기 leftData에 idx를 추가합니다.
 const initialLeftData = [
 	{idx: 0, key: 'server.por123t', value: '8080'},
 	{
@@ -35,7 +35,6 @@ const initialLeftData = [
 	},
 ];
 
-// 우측 데이터 (비교 대상, 수정 불가)
 const rightData = [
 	{key: 'server.por123t', value: '8081'},
 	{
@@ -45,14 +44,14 @@ const rightData = [
 	{key: 'spring.datasource.username', value: 'eddy-am'},
 	{key: 'spring.datasource.password', value: 'qwelz3!'},
 	{key: '', value: ''},
-	// 우측에 추가 행이 있는 경우:
+	// 예를 들어 우측 데이터에 추가 행이 있다고 가정할 경우:
 	{key: 'extra.row', value: 'extraValue'},
 ];
 
 export default function CompareTable() {
 	const [compareData, setCompareData] = useState(initialLeftData);
 
-	// 좌측 데이터 수정 시 idx를 기준으로 업데이트
+	// 좌측 데이터 수정 시 인덱스를 기준으로 업데이트
 	const handleEditValue = useCallback((idx, newValue) => {
 		setCompareData((prevData) =>
 			prevData.map((item) =>
@@ -69,88 +68,77 @@ export default function CompareTable() {
 		);
 	}, []);
 
-	// 두 데이터셋 중 행 개수가 더 큰 값으로 테이블의 행을 구성합니다.
-	const combinedData = useMemo(() => {
-		const maxRows = Math.max(compareData.length, rightData.length);
-		return Array.from({length: maxRows}, (_, idx) => ({idx}));
-	}, [compareData, rightData]);
-
-	// 하나의 테이블에서 좌측/우측 데이터를 모두 보여줄 5개의 열을 구성합니다.
-	const columns = useMemo(
+	// 좌측 테이블 컬럼: 인덱스(idx)를 사용하여 우측 데이터와 비교
+	const leftColumns = useMemo(
 		() => [
 			{
-				accessorKey: 'leftKey',
-				header: 'Left Key',
+				accessorKey: 'key',
+				header: 'Key',
 				cell: ({row}) => {
-					const idx = row.original.idx;
-					const leftItem = compareData[idx];
+					const {idx, key} = row.original;
 					const rightItem = rightData[idx];
-					const value = leftItem ? leftItem.key : '';
-					const isDifferent =
-						rightItem && leftItem && rightItem.key !== leftItem.key;
+					const isDifferent = !rightItem || rightItem.key !== key;
 					return (
 						<input
 							type='text'
-							value={value}
+							value={key}
 							style={{backgroundColor: isDifferent ? 'lightgreen' : 'white'}}
-							onChange={(e) => {
-								if (leftItem) {
-									handleEditKey(idx, e.target.value);
-								}
-							}}
+							onChange={(e) => handleEditKey(idx, e.target.value)}
 						/>
 					);
 				},
 			},
 			{
-				accessorKey: 'leftValue',
-				header: 'Left Value',
+				accessorKey: 'value',
+				header: 'Value',
 				cell: ({row}) => {
-					const idx = row.original.idx;
-					const leftItem = compareData[idx];
+					const {idx, value} = row.original;
 					const rightItem = rightData[idx];
-					const value = leftItem ? leftItem.value : '';
-					const isDifferent =
-						rightItem && leftItem && rightItem.value !== leftItem.value;
+					const isDifferent = !rightItem || rightItem.value !== value;
 					return (
 						<input
 							type='text'
 							value={value}
 							style={{backgroundColor: isDifferent ? 'lightgreen' : 'white'}}
-							onChange={(e) => {
-								if (leftItem) {
-									handleEditValue(idx, e.target.value);
-								}
-							}}
+							onChange={(e) => handleEditValue(idx, e.target.value)}
 						/>
 					);
 				},
 			},
+		],
+		[handleEditKey, handleEditValue],
+	);
+
+	// 우측 테이블 컬럼: row.index를 사용하여 좌측 데이터(compareData)와 비교
+	const rightColumns = useMemo(
+		() => [
 			{
 				accessorKey: 'action',
 				header: 'Action',
 				cell: ({row}) => {
-					const idx = row.original.idx;
+					const idx = row.index;
+					// 좌측 데이터가 없으면 leftItem은 undefined
 					const leftItem = compareData[idx];
 					const rightItem = rightData[idx];
-					// diff: 좌측 데이터가 없거나, 값이 다르면 diff 버튼 활성화
+					// 행이 누락되었거나 값이 다르면 diff 적용
 					const isDifferent =
 						!leftItem ||
-						(rightItem &&
-							(leftItem.key !== rightItem.key ||
-								leftItem.value !== rightItem.value));
-					if (!rightItem) return null;
+						leftItem.key !== rightItem.key ||
+						leftItem.value !== rightItem.value;
+
 					return isDifferent ? (
 						<button
 							onClick={() => {
 								setCompareData((prevData) => {
-									// 좌측 데이터가 없다면 추가, 있다면 업데이트
+									// 만약 해당 idx에 좌측 데이터가 없다면, 추가합니다.
 									if (!prevData.find((item) => item.idx === idx)) {
+										// 새 배열로 추가 (배열 순서가 idx 기준으로 정렬되어 있다고 가정)
 										return [
 											...prevData,
 											{idx, key: rightItem.key, value: rightItem.value},
 										];
 									} else {
+										// 이미 존재하면 해당 행을 업데이트합니다.
 										return prevData.map((item) =>
 											item.idx === idx
 												? {...item, key: rightItem.key, value: rightItem.value}
@@ -166,15 +154,13 @@ export default function CompareTable() {
 				},
 			},
 			{
-				accessorKey: 'rightKey',
-				header: 'Right Key',
+				accessorKey: 'key',
+				header: 'Key',
 				cell: ({row}) => {
-					const idx = row.original.idx;
+					const idx = row.index;
 					const leftItem = compareData[idx];
-					const rightItem = rightData[idx];
-					const value = rightItem ? rightItem.key : '';
-					const isDifferent =
-						leftItem && rightItem && leftItem.key !== rightItem.key;
+					// 만약 좌측 항목이 없다면 diff 처리
+					const isDifferent = !leftItem || leftItem.key !== row.original.key;
 					return (
 						<span
 							style={{
@@ -182,21 +168,19 @@ export default function CompareTable() {
 								padding: '2px',
 							}}
 						>
-							{value}
+							{row.original.key}
 						</span>
 					);
 				},
 			},
 			{
-				accessorKey: 'rightValue',
-				header: 'Right Value',
+				accessorKey: 'value',
+				header: 'Value',
 				cell: ({row}) => {
-					const idx = row.original.idx;
+					const idx = row.index;
 					const leftItem = compareData[idx];
-					const rightItem = rightData[idx];
-					const value = rightItem ? rightItem.value : '';
 					const isDifferent =
-						leftItem && rightItem && leftItem.value !== rightItem.value;
+						!leftItem || leftItem.value !== row.original.value;
 					return (
 						<span
 							style={{
@@ -204,26 +188,34 @@ export default function CompareTable() {
 								padding: '2px',
 							}}
 						>
-							{value}
+							{row.original.value}
 						</span>
 					);
 				},
 			},
 		],
-		[compareData, rightData, handleEditKey, handleEditValue],
+		[compareData],
 	);
 
-	const table = useReactTable({
-		data: combinedData,
-		columns,
+	// 테이블 생성
+	const leftTable = useReactTable({
+		data: compareData,
+		columns: leftColumns,
+		getCoreRowModel: getCoreRowModel(),
+	});
+
+	const rightTable = useReactTable({
+		data: rightData,
+		columns: rightColumns,
 		getCoreRowModel: getCoreRowModel(),
 	});
 
 	return (
-		<div style={{display: 'flex', justifyContent: 'center'}}>
+		<div style={{display: 'flex', justifyContent: 'center', gap: '20px'}}>
+			{/* 좌측 테이블 */}
 			<table border='1'>
 				<thead>
-					{table.getHeaderGroups().map((headerGroup) => (
+					{leftTable.getHeaderGroups().map((headerGroup) => (
 						<tr key={headerGroup.id}>
 							{headerGroup.headers.map((header) => (
 								<th key={header.id}>
@@ -237,7 +229,36 @@ export default function CompareTable() {
 					))}
 				</thead>
 				<tbody>
-					{table.getRowModel().rows.map((row) => (
+					{leftTable.getRowModel().rows.map((row) => (
+						<tr key={row.id}>
+							{row.getVisibleCells().map((cell) => (
+								<td key={cell.id}>
+									{flexRender(cell.column.columnDef.cell, cell.getContext())}
+								</td>
+							))}
+						</tr>
+					))}
+				</tbody>
+			</table>
+
+			{/* 우측 테이블 */}
+			<table border='1'>
+				<thead>
+					{rightTable.getHeaderGroups().map((headerGroup) => (
+						<tr key={headerGroup.id}>
+							{headerGroup.headers.map((header) => (
+								<th key={header.id}>
+									{flexRender(
+										header.column.columnDef.header,
+										header.getContext(),
+									)}
+								</th>
+							))}
+						</tr>
+					))}
+				</thead>
+				<tbody>
+					{rightTable.getRowModel().rows.map((row) => (
 						<tr key={row.id}>
 							{row.getVisibleCells().map((cell) => (
 								<td key={cell.id}>
