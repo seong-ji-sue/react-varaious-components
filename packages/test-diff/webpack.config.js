@@ -66,7 +66,7 @@ module.exports = () => {
 				name: 'diff',
 				filename: 'remoteEntry.js',
 				exposes: {
-					'./TestPage': './src/Page.js',
+					'./Page': './src/Page.js',
 				},
 				shared: {
 					react: {
