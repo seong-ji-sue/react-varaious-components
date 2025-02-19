@@ -6,26 +6,32 @@ import {
 } from '@tanstack/react-table';
 
 // TextInput 컴포넌트: 로컬 상태를 사용해 onBlur 시 부모로 commit
-const TextInput = React.memo(({initialValue, style, onCommit, inputId}) => {
-	const [localValue, setLocalValue] = useState(initialValue);
-	const inputRef = useRef(null);
+const TextInput = React.memo(
+	({initialValue, style, onCommit, inputId, readOnly}) => {
+		const [localValue, setLocalValue] = useState(initialValue);
+		const inputRef = useRef(null);
 
-	useEffect(() => {
-		setLocalValue(initialValue);
-	}, [initialValue]);
+		useEffect(() => {
+			setLocalValue(initialValue);
+		}, [initialValue]);
 
-	return (
-		<input
-			ref={inputRef}
-			type='text'
-			id={inputId}
-			value={localValue}
-			style={style}
-			onChange={(e) => setLocalValue(e.target.value)}
-			onBlur={() => onCommit(localValue)}
-		/>
-	);
-});
+		if (readOnly) {
+			return <span style={{...style, padding: '4px'}}>{localValue}</span>;
+		}
+
+		return (
+			<input
+				ref={inputRef}
+				type='text'
+				id={inputId}
+				value={localValue}
+				style={style}
+				onChange={(e) => setLocalValue(e.target.value)}
+				onBlur={() => onCommit(localValue)}
+			/>
+		);
+	},
+);
 
 // 초기 좌측 데이터
 const initialLeftData = [
@@ -55,16 +61,16 @@ const initialRightData = [
 ];
 
 export default function CompareTable() {
-	// 좌측과 우측 데이터를 모두 state로 관리
+	// 좌측과 우측 데이터를 모두 state로 관리 (좌측 데이터에 deleted 플래그 포함)
 	const [compareData, setCompareData] = useState(initialLeftData);
 	const [rightDataState, setRightDataState] = useState(initialRightData);
 	const [selectedRows, setSelectedRows] = useState([]);
 
-	// 좌측 데이터 수정: onBlur 시 commit
+	// 좌측 데이터 수정: onBlur 시 commit (삭제된 행은 수정하지 않음)
 	const handleEditValue = useCallback((idx, newValue) => {
 		setCompareData((prevData) =>
 			prevData.map((item) =>
-				item.idx === idx ? {...item, value: newValue} : item,
+				item.idx === idx && !item.deleted ? {...item, value: newValue} : item,
 			),
 		);
 	}, []);
@@ -72,24 +78,70 @@ export default function CompareTable() {
 	const handleEditKey = useCallback((idx, newKey) => {
 		setCompareData((prevData) =>
 			prevData.map((item) =>
-				item.idx === idx ? {...item, key: newKey} : item,
+				item.idx === idx && !item.deleted ? {...item, key: newKey} : item,
 			),
 		);
 	}, []);
 
-	// Add 버튼: 새 행을 좌측과 우측 데이터 모두에 추가 (기본값은 빈 문자열)
+	// Add 버튼: 새 행을 좌측과 우측 데이터 모두에 추가 (기본값은 빈 문자열, deleted: false)
 	const handleAddRow = useCallback(() => {
 		const newIdx =
 			compareData.length > 0
 				? Math.max(...compareData.map((d) => d.idx)) + 1
 				: 0;
-		const newLeftRow = {idx: newIdx, key: '', value: ''};
+		const newLeftRow = {idx: newIdx, key: '', value: '', deleted: false};
 		const newRightRow = {key: '', value: ''};
 		setCompareData((prevData) => [...prevData, newLeftRow]);
 		setRightDataState((prevData) => [...prevData, newRightRow]);
 	}, [compareData]);
 
-	// 두 데이터셋 중 최대 행 수를 기준으로 행 생성
+	// Delete Selected 버튼: 선택된 행에 대해 삭제 처리
+	const handleDeleteSelected = useCallback(() => {
+		// 새 배열을 구성하면서, 선택된 행에 대해 처리
+		const newLeft = [];
+		const newRight = [];
+		// 두 데이터셋의 최대 행 수 기준으로 순회
+		const maxRows = Math.max(compareData.length, rightDataState.length);
+		for (let i = 0; i < maxRows; i++) {
+			// 각 배열의 값 (없으면 undefined)
+			const leftItem = compareData[i];
+			const rightItem = rightDataState[i];
+			// 만약 해당 행이 선택된 (선택된 idx 목록에 leftItem.idx 포함) 경우
+			if (leftItem && selectedRows.includes(leftItem.idx)) {
+				// 우측 데이터가 존재하고, RightKey와 RightValue가 모두 빈 문자열이면 완전 삭제
+				if (
+					rightItem &&
+					rightItem.key.trim() === '' &&
+					rightItem.value.trim() === ''
+				) {
+					// 해당 행은 건너뜁니다.
+					continue;
+				} else {
+					// 우측 데이터에 값이 하나라도 있으면 삭제 대신 "delete" 표시
+					newLeft.push({
+						...leftItem,
+						key: 'delete',
+						value: 'delete',
+						deleted: true,
+					});
+					newRight.push(rightItem || {key: '', value: ''});
+				}
+			} else {
+				// 선택되지 않은 행은 그대로 유지
+				if (leftItem) newLeft.push(leftItem);
+				if (rightItem) newRight.push(rightItem);
+			}
+		}
+		// 재인덱싱: 새 배열의 각 행에 대해 idx를 순차적으로 부여
+		const reIndexedLeft = newLeft.map((item, i) => ({...item, idx: i}));
+		// reIndexedRight: 단순히 배열 순서를 유지 (우측 데이터는 idx가 없으므로 그대로 사용)
+		const reIndexedRight = newRight;
+		setCompareData(reIndexedLeft);
+		setRightDataState(reIndexedRight);
+		setSelectedRows([]);
+	}, [compareData, rightDataState, selectedRows]);
+
+	// 두 데이터셋 중 최대 행 수를 기준으로 행 생성 (각 행은 idx를 포함)
 	const combinedData = useMemo(() => {
 		const maxRows = Math.max(compareData.length, rightDataState.length);
 		return Array.from({length: maxRows}, (_, idx) => ({idx}));
@@ -143,7 +195,13 @@ export default function CompareTable() {
 					const leftItem = compareData.find((item) => item.idx === idx);
 					const rightItem = rightDataState[idx];
 					const value = leftItem ? leftItem.key : '';
-					// 하이라이팅: 우측 데이터가 존재하고, 좌측과 값이 다르면 true
+					if (leftItem && leftItem.deleted) {
+						return (
+							<span style={{backgroundColor: 'lightgray', padding: '4px'}}>
+								delete
+							</span>
+						);
+					}
 					const isDifferent =
 						rightItem && leftItem && leftItem.key !== rightItem.key;
 					return (
@@ -154,6 +212,7 @@ export default function CompareTable() {
 							onCommit={(val) => {
 								if (leftItem) handleEditKey(idx, val);
 							}}
+							readOnly={false}
 						/>
 					);
 				},
@@ -166,6 +225,13 @@ export default function CompareTable() {
 					const leftItem = compareData.find((item) => item.idx === idx);
 					const rightItem = rightDataState[idx];
 					const value = leftItem ? leftItem.value : '';
+					if (leftItem && leftItem.deleted) {
+						return (
+							<span style={{backgroundColor: 'lightgray', padding: '4px'}}>
+								delete
+							</span>
+						);
+					}
 					const isDifferent =
 						rightItem && leftItem && leftItem.value !== rightItem.value;
 					return (
@@ -176,6 +242,7 @@ export default function CompareTable() {
 							onCommit={(val) => {
 								if (leftItem) handleEditValue(idx, val);
 							}}
+							readOnly={false}
 						/>
 					);
 				},
@@ -187,13 +254,12 @@ export default function CompareTable() {
 					const idx = row.original.idx;
 					const leftItem = compareData.find((item) => item.idx === idx);
 					const rightItem = rightDataState[idx];
-					// 하이라이팅 조건: 우측 데이터가 존재하고, 좌측과 우측이 다르면
+					if (!rightItem || (leftItem && leftItem.deleted)) return null;
 					const isDifferent =
 						leftItem &&
 						rightItem &&
 						(leftItem.key !== rightItem.key ||
 							leftItem.value !== rightItem.value);
-					if (!rightItem) return null;
 					return isDifferent ? (
 						<button
 							onClick={() => {
@@ -276,10 +342,12 @@ export default function CompareTable() {
 		<div
 			style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}
 		>
-			{/* Add 버튼 */}
-			<button onClick={handleAddRow} style={{marginBottom: '10px'}}>
-				Add
-			</button>
+			<div style={{marginBottom: '10px'}}>
+				<button onClick={handleAddRow} style={{marginRight: '10px'}}>
+					Add
+				</button>
+				<button onClick={handleDeleteSelected}>Delete Selected</button>
+			</div>
 			<table border='1'>
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
