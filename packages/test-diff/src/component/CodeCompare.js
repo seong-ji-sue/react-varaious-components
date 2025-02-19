@@ -3,6 +3,36 @@ import React, {useState, useMemo, useCallback, useRef} from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import {yaml} from '@codemirror/lang-yaml';
 import {EditorView, Decoration, ViewPlugin} from '@codemirror/view';
+import styled, {createGlobalStyle} from 'styled-components';
+
+const compareText = `server:
+  port: 8080
+  host: localhost
+database:
+  name: mydb
+  user: admin`;
+
+const rightText = `server:
+  port: 8080
+  host: 127.0.0.1
+database:
+  name: mydb
+  user: root
+    port: 8080
+  host: 127.0.0.1
+database:
+  name: mydb
+  user: root  port: 8080
+  host: 127.0.0.1
+database:
+  name: mydb
+  user: root  port: 8080
+  host: 127.0.0.1
+database:
+  name: mydb
+  user: root
+  
+  `;
 
 // 좌측(최신)와 우측(이전) 텍스트를 줄 단위로 비교하여 diff가 발생한 줄 번호를 반환 (1-indexed)
 const calculateDiffLines = (leftText, rightText) => {
@@ -49,65 +79,37 @@ function diffHighlighter(diffSet, colorClass) {
 
 const CodeCompare = () => {
 	// 기본 YAML 텍스트 예시
-	const [leftText, setLeftText] = useState(`server:
-  port: 8080
-  host: localhost
-database:
-  name: mydb
-  user: admin`);
-	const [rightText] = useState(`server:
-  port: 8080
-  host: 127.0.0.1
-database:
-  name: mydb
-  user: root
-    port: 8080
-  host: 127.0.0.1
-database:
-  name: mydb
-  user: root  port: 8080
-  host: 127.0.0.1
-database:
-  name: mydb
-  user: root  port: 8080
-  host: 127.0.0.1
-database:
-  name: mydb
-  user: root
-  
-  `);
+	const [leftText, setLeftText] = useState(compareText);
 
-	// 좌측과 우측 텍스트 간 diff가 발생한 줄 번호 계산 (1-indexed)
+	// 좌측과 우측 텍스트 간 diff가 발생한 라인 번호 계산 (1-indexed)
 	const diffSet = useMemo(
 		() => calculateDiffLines(leftText, rightText),
-		[leftText, rightText],
+		[leftText],
 	);
 
-	// 좌측 에디터에서 현재 커서(또는 선택)가 있는 줄 번호 (초기값 1)
-	const [activeLine, setActiveLine] = useState(1);
-
-	// 우측 에디터의 EditorView 참조 (우측 selection 업데이트 시 사용)
+	// 우측 에디터의 EditorView 참조 (좌측 선택 동기화에 사용)
 	const rightEditorRef = useRef(null);
 
-	// 좌측 에디터 확장: YAML, diff 하이라이팅(초록) 및 커서 업데이트 리스너
+	/**
+	 * 좌측 에디터 확장:
+	 * - YAML 모드 적용
+	 * - diffHighlighter를 통해 초록색(diff-green) 하이라이팅 적용
+	 * - updateListener를 통해 좌측 에디터의 선택이 변경될 때 해당 라인의 선택을 우측 에디터에 동기화
+	 */
 	const leftExtensions = useMemo(
 		() => [
 			yaml(),
 			diffHighlighter(diffSet, 'diff-green'),
 			EditorView.updateListener.of((update) => {
-				if (update.selectionSet) {
+				if (update.selectionSet && rightEditorRef.current) {
 					const pos = update.state.selection.main.head;
 					const lineNumber = update.state.doc.lineAt(pos).number;
-					setActiveLine(lineNumber);
-					// 좌측 에디터의 선택 라인과 동일하게 우측 에디터의 selection을 업데이트
-					if (rightEditorRef.current) {
-						const rightState = rightEditorRef.current.state;
-						if (lineNumber <= rightState.doc.lines) {
-							const line = rightState.doc.line(lineNumber);
-							rightEditorRef.current.dispatch({
-								selection: {anchor: line.from, head: line.to},
-							});
-						}
+					const rightState = rightEditorRef.current.state;
+					if (lineNumber <= rightState.doc.lines) {
+						const line = rightState.doc.line(lineNumber);
+						rightEditorRef.current.dispatch({
+							selection: {anchor: line.from, head: line.to},
+						});
 					}
 				}
 			}),
@@ -125,6 +127,8 @@ database:
 			EditorView.theme({
 				'.cm-selectionLayer': {backgroundColor: 'transparent !important'},
 				'.cm-selectionLayer *': {backgroundColor: 'transparent !important'},
+				'.cm-selectionMatch': {backgroundColor: 'transparent !important'},
+				'.cm-selectionMatch *': {backgroundColor: 'transparent !important'},
 			}),
 			EditorView.domEventHandlers({
 				mousedown: (event, view) => {
@@ -150,21 +154,18 @@ database:
 	}, []);
 
 	return (
-		<div style={styles.container}>
-			<div style={styles.editorContainer}>
-				<h3>최신 (좌측, 수정 가능 / 초록 하이라이트)</h3>
+		<Container>
+			<EditorContainer>
+				<Title>최신 (좌측, 수정 가능 / 초록 하이라이트)</Title>
 				<CodeMirror
 					value={leftText}
 					height='300px'
 					extensions={leftExtensions}
 					onChange={onLeftChange}
 				/>
-			</div>
-			<div style={styles.editorContainer}>
-				<h3>
-					이전 (우측, 읽기 전용 / 빨간 하이라이트 / 좌측 선택 동기화, 직접 선택
-					불가)
-				</h3>
+			</EditorContainer>
+			<EditorContainer>
+				<Title>이전 (우측, 읽기 전용 / 빨간 하이라이트)</Title>
 				<CodeMirror
 					value={rightText}
 					height='300px'
@@ -173,31 +174,35 @@ database:
 						rightEditorRef.current = view;
 					}}
 				/>
-			</div>
-			{/* 내부 스타일: diff 하이라이팅 */}
-			<style>{`
-        .diff-green {
-          background-color: #e0ffe0;
-        }
-        .diff-red {
-          background-color: #ffe0e0;
-        }
-      `}</style>
-		</div>
+			</EditorContainer>
+			<GlobalStyle />
+		</Container>
 	);
 };
 
-const styles = {
-	container: {
-		display: 'flex',
-		gap: '1em',
-		padding: '1em',
-	},
-	editorContainer: {
-		flex: 1,
-		border: '1px solid #ddd',
-		padding: '0.5em',
-	},
-};
-
 export default CodeCompare;
+
+// Global 스타일: diff 하이라이팅 CSS 클래스 정의
+const GlobalStyle = createGlobalStyle`
+  .diff-green {
+    background-color: #e0ffe0;
+  }
+  .diff-red {
+    background-color: #ffe0e0;
+  }
+`;
+
+// styled-components로 레이아웃 스타일 정의
+const Container = styled.div`
+	display: flex;
+	gap: 1em;
+	padding: 1em;
+`;
+const EditorContainer = styled.div`
+	flex: 1;
+	border: 1px solid #ddd;
+	padding: 0.5em;
+`;
+const Title = styled.h3`
+	margin-bottom: 0.5em;
+`;
