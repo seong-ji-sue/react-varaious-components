@@ -4,33 +4,33 @@ import CodeMirror from '@uiw/react-codemirror';
 import {yaml} from '@codemirror/lang-yaml';
 import {EditorView, Decoration, ViewPlugin, WidgetType} from '@codemirror/view';
 import {lineNumbers} from '@codemirror/gutter';
-import styled, {createGlobalStyle} from 'styled-components';
+import './CodeCompare.scss';
 
 const compareText = `server:
   port: 8080
   host: localhost
 database:
-  name: mydb
+  name: oracledb
   user: admin`;
 
 const rightText = `server:
   port: 8080
-  host: 127.0.0.1
+  host: 129.0.0.1
 database:
-  name: mydb
+  name: oracledb
   user: root
-    port: 8080
-  host: 127.0.0.1
+    port: 8081
+  host: 127.0.1.1
 database:
-  name: mydb
-  user: root  port: 8080
-  host: 127.0.0.1
+  name: oracledb
+  user: root  port: 8081
+  host: 127.0.1.1
 database:
-  name: mydb
-  user: root  port: 8080
-  host: 127.0.0.1
+  name: oracledb
+  user: root  port: 8081
+  host: 127.0.1.1
 database:
-  name: mydb
+  name: oracledb
   user: root`;
 
 /**
@@ -80,7 +80,7 @@ function diffHighlighter(diffSet, colorClass) {
 
 /**
  * ClickableArrowWidget
- * - WidgetType를 상속받아, 우측 gutter에 표시되는 위젯으로, "←X" (X는 라인 번호)를 표시합니다.
+ * - WidgetType를 상속받아, 우측 gutter에 표시되는 위젯으로, "←"를 표시합니다.
  * - 클릭 시 onArrowClick 콜백을 호출합니다.
  */
 class ClickableArrowWidget extends WidgetType {
@@ -91,11 +91,10 @@ class ClickableArrowWidget extends WidgetType {
 	}
 	toDOM() {
 		const span = document.createElement('span');
-		span.textContent = `←`;
+		span.textContent = '←';
 		span.style.color = 'red';
 		span.style.fontWeight = 'bold';
 		span.style.cursor = 'pointer';
-		// 클릭 이벤트 처리: 콜백 호출
 		span.onclick = (e) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -126,7 +125,7 @@ function diffWidgetMarker(diffSet, onArrowClick) {
 				for (let i = 1; i <= view.state.doc.lines; i++) {
 					if (diffSet.has(i)) {
 						const line = view.state.doc.line(i);
-						// side: -1 ensures the widget is placed before the line content
+						// side: -1 ensures the widget appears before the line content
 						widgets.push(
 							Decoration.widget({
 								widget: new ClickableArrowWidget(i, onArrowClick),
@@ -145,7 +144,6 @@ function diffWidgetMarker(diffSet, onArrowClick) {
 const CodeCompare = () => {
 	// 좌측(최신) 텍스트 상태 (수정 가능)
 	const [leftText, setLeftText] = useState(compareText);
-	// 우측 텍스트는 상수(rightText)
 	// 좌측과 우측 텍스트 간 diff 라인 번호 계산
 	const diffSet = useMemo(
 		() => calculateDiffLines(leftText, rightText),
@@ -156,19 +154,15 @@ const CodeCompare = () => {
 
 	/**
 	 * 우측 화살표 클릭 시 호출되는 콜백.
-	 * 전달받은 라인 번호의 오른쪽 에디터 내용을 좌측 에디터에 덮어씌웁니다.
+	 * 전달받은 라인 번호의 오른쪽 텍스트 내용을 좌측 텍스트의 해당 라인에 덮어씌웁니다.
 	 */
 	const onArrowClick = useCallback(
 		(lineNumber) => {
-			// 좌측, 우측 텍스트를 줄 단위 배열로 분리
 			const leftLines = leftText.split('\n');
 			const rightLines = rightText.split('\n');
-			// 해당 라인의 내용(배열 인덱스는 lineNumber - 1)
 			if (lineNumber - 1 < rightLines.length) {
 				leftLines[lineNumber - 1] = rightLines[lineNumber - 1];
-				// 업데이트된 라인 배열을 다시 문자열로 결합
-				const newLeftText = leftLines.join('\n');
-				setLeftText(newLeftText);
+				setLeftText(leftLines.join('\n'));
 			}
 		},
 		[leftText],
@@ -178,7 +172,7 @@ const CodeCompare = () => {
 	 * 좌측 에디터 확장:
 	 * - YAML 모드 적용
 	 * - diffHighlighter를 통해 'diff-green' 클래스로 초록 하이라이팅 적용
-	 * - updateListener: 좌측 에디터의 선택 변경 시 우측 에디터의 선택을 동기화
+	 * - updateListener를 통해 좌측 에디터의 선택이 변경되면 해당 라인의 선택 범위를 우측 에디터에 동기화
 	 */
 	const leftExtensions = useMemo(
 		() => [
@@ -205,8 +199,8 @@ const CodeCompare = () => {
 	 * 우측 에디터 확장:
 	 * - YAML 모드 적용
 	 * - diffHighlighter를 통해 'diff-red' 클래스로 빨간 하이라이팅 적용
-	 * - diffWidgetMarker를 통해 우측 gutter에 ClickableArrowWidget을 삽입하여, 라인 앞에 화살표와 숫자 표시
-	 * - readOnly 설정 및 기본 selection 스타일 제거, 마우스 이벤트 차단
+	 * - diffWidgetMarker를 통해 우측 gutter에 클릭 가능한 화살표 위젯 삽입 (라인 앞에)
+	 * - readOnly 설정, 기본 selection 스타일 제거, 마우스 이벤트 차단
 	 */
 	const rightExtensions = useMemo(
 		() => [
@@ -243,20 +237,20 @@ const CodeCompare = () => {
 	}, []);
 
 	return (
-		<Container>
-			<EditorContainer>
-				<Title>최신 (좌측, 수정 가능 / 초록 하이라이팅)</Title>
+		<div className='container'>
+			<div className='editor-container'>
+				<h3 className='title'>최신 (좌측, 수정 가능 / 초록 하이라이팅)</h3>
 				<CodeMirror
 					value={leftText}
 					height='300px'
 					extensions={leftExtensions}
 					onChange={onLeftChange}
 				/>
-			</EditorContainer>
-			<EditorContainer>
-				<Title>
+			</div>
+			<div className='editor-container'>
+				<h3 className='title'>
 					이전 (우측, 읽기 전용 / 빨간 하이라이팅 / 라인 앞 화살표 표시)
-				</Title>
+				</h3>
 				<CodeMirror
 					value={rightText}
 					height='300px'
@@ -265,40 +259,9 @@ const CodeCompare = () => {
 						rightEditorRef.current = view;
 					}}
 				/>
-			</EditorContainer>
-			<GlobalStyle />
-		</Container>
+			</div>
+		</div>
 	);
 };
 
 export default CodeCompare;
-
-/* GlobalStyle: diff 하이라이팅 및 gutter 영역 스타일 정의 */
-const GlobalStyle = createGlobalStyle`
-	.diff-green {
-		background-color: #e0ffe0;
-	}
-	.diff-red {
-		background-color: #ffe0e0;
-	}
-	.cm-gutters {
-		background-color: #f5f5f5;
-		color: black;
-		border-right: 1px solid #ddd;
-	}
-`;
-
-/* styled-components 레이아웃 스타일 정의 */
-const Container = styled.div`
-	display: flex;
-	gap: 1em;
-	padding: 1em;
-`;
-const EditorContainer = styled.div`
-	flex: 1;
-	border: 1px solid #ddd;
-	padding: 0.5em;
-`;
-const Title = styled.h3`
-	margin-bottom: 0.5em;
-`;

@@ -1,0 +1,87 @@
+.compare-table-container {
+  margin: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button-group {
+  margin-bottom: 10px;
+  button {
+    margin-right: 10px;
+  }
+}
+
+.add-btn {
+  background-color: #4caf50; // green
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background-color: #f44336; // red
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.header-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.global-diff-btn {
+  background-color: #2196f3; // blue
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.diff-btn {
+  background-color: #ff9800; // orange
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.text-input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.text-output {
+  display: inline-block;
+  min-width: 80px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.checkbox-input {
+  cursor: pointer;
+}
+
+.compare-table {
+  width: 90%;
+  border-collapse: collapse;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
