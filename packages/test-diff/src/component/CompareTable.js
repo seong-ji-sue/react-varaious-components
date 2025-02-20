@@ -7,11 +7,10 @@ import {
 
 // -------------------------------------------------------------------
 // TextInput 컴포넌트 (통합 버전)
-// - standalone 모드와 cell 모드를 모두 지원
+// - diffField prop을 추가하여, 현재 필드와 비교할 대상 필드를 분리함
 // -------------------------------------------------------------------
 const TextInput = React.memo((props) => {
 	const {
-		// standalone props
 		initialValue,
 		style = {},
 		onCommit,
@@ -24,6 +23,7 @@ const TextInput = React.memo((props) => {
 		data,
 		otherData,
 		field,
+		diffField, // 비교할 대상 필드 (없으면 field 그대로)
 	} = props;
 
 	let computedInitialValue = initialValue;
@@ -32,10 +32,12 @@ const TextInput = React.memo((props) => {
 	let computedReadOnly = readOnly;
 	if (row && data && field) {
 		const idx = row.original.idx;
-		const item = data[idx] || {};
-		const otherItem = (otherData && otherData[idx]) || {};
+		const item = data.find((item) => item.idx === idx) || {};
+		const otherItem =
+			(otherData && otherData.find((item) => item.idx === idx)) || {};
 		computedInitialValue = item[field] || '';
-		computedDiffValue = otherItem[field] || '';
+		const fieldToCompare = diffField || field;
+		computedDiffValue = otherItem[fieldToCompare] || '';
 		computedInputId = `${field}-${idx}`;
 		computedReadOnly = readOnly;
 	}
@@ -47,7 +49,6 @@ const TextInput = React.memo((props) => {
 		setLocalValue(computedInitialValue);
 	}, [computedInitialValue]);
 
-	// readOnly인 경우에도 최신 값(computedInitialValue)을 기준으로 하이라이팅 계산
 	const effectiveValue = computedReadOnly ? computedInitialValue : localValue;
 	const backgroundColor =
 		computedDiffValue !== undefined
@@ -75,11 +76,7 @@ const TextInput = React.memo((props) => {
 			onChange={(e) => setLocalValue(e.target.value)}
 			onBlur={() => {
 				if (onCommit) {
-					if (row) {
-						onCommit(row.original.idx, localValue);
-					} else {
-						onCommit(localValue);
-					}
+					onCommit(row.original.idx, localValue);
 				}
 			}}
 		/>
@@ -87,43 +84,35 @@ const TextInput = React.memo((props) => {
 });
 
 // -------------------------------------------------------------------
-// DiffButton 컴포넌트: 헤더 및 셀의 diff 버튼을 모두 처리
-// - row prop이 있으면 행 diff 모드로 동작
-// - row가 없고 overallDiffExists prop이 전달되면 전체 diff 모드로 동작
-//   overallDiffExists가 false이면 버튼을 hidden 처리함
+// DiffButton 컴포넌트: 행 단위 및 전체 diff 처리
 // -------------------------------------------------------------------
 const DiffButton = ({
 	row,
-	compareData,
-	rightDataState,
-	setCompareData,
+	data,
+	setData,
 	overallDiffExists,
 	onClick,
 	title,
 	style,
 }) => {
-	// 행 diff 모드
-	if (row && compareData && rightDataState && setCompareData) {
+	// 행 diff 모드: row가 있으면 좌측(key, value)와 우측(beforeKey, beforeValue)를 비교
+	// diff 실행 시 좌측을 우측 값으로 덮어씀.
+	if (row && data && setData) {
 		const idx = row.original.idx;
-		const leftItem = compareData.find((item) => item.idx === idx);
-		const rightItem = rightDataState[idx];
-		if (!rightItem || (leftItem && leftItem.deleted)) return null;
+		const item = data.find((item) => item.idx === idx);
+		if (!item) return null;
 		const isDifferent =
-			leftItem &&
-			rightItem &&
-			(leftItem.key !== rightItem.key || leftItem.value !== rightItem.value);
+			item.key !== item.beforeKey || item.value !== item.beforeValue;
 		if (!isDifferent) return null;
-
 		const handleRowDiff = () => {
-			setCompareData((prevData) =>
-				prevData.map((item) =>
-					item.idx === idx
-						? {...item, key: rightItem.key, value: rightItem.value}
-						: item,
+			setData((prevData) =>
+				prevData.map((it) =>
+					it.idx === idx
+						? {...it, key: it.beforeKey, value: it.beforeValue}
+						: it,
 				),
 			);
 		};
-
 		return (
 			<button onClick={handleRowDiff} title={title} style={style}>
 				{'<<'}
@@ -131,7 +120,7 @@ const DiffButton = ({
 		);
 	}
 
-	// 전체 diff 모드 (row prop이 없는 경우)
+	// 전체 diff 모드: row가 없으면 전체 행에 대해 diff가 있으면 onClick 실행
 	if (overallDiffExists === false) {
 		return <button style={{...style, visibility: 'hidden'}}>{'<<'}</button>;
 	}
@@ -143,162 +132,137 @@ const DiffButton = ({
 };
 
 // -------------------------------------------------------------------
-// 초기 데이터: 좌측과 우측
+// 초기 데이터: 하나의 배열로 { key, value, beforeKey, beforeValue } 구성
 // -------------------------------------------------------------------
-const initialLeftData = [
-	{idx: 0, key: 'server.port', value: '9000'},
+const initialData = [
+	{
+		idx: 0,
+		key: 'server.port',
+		value: '9000',
+		beforeKey: 'server.port',
+		beforeValue: '9000',
+	},
 	{
 		idx: 1,
 		key: 'spring.datasource.url',
-		value: 'jdbc:oraclesql://192.159.101.3326/jisu?useSSL123=False',
-	},
-	{idx: 2, key: 'spring.datasource.username', value: 'jisu-diff'},
-	{idx: 3, key: 'spring.datasource.password', value: '123123'},
-	{idx: 4, key: 'spring.jpa.hibernate.ddl-auto', value: ''},
-	{idx: 5, key: 'spring.jpa.hibernate.ddl-auto', value: ''},
-];
-
-const initialRightData = [
-	{key: 'server.port', value: '9000'},
-	{
-		key: 'spring.datasource.url',
 		value: 'jdbc:maria://192.159.101.3326/jisu?useSSL123=False',
+		beforeKey: 'spring.datasource.url',
+		beforeValue: 'jdbc:oraclesql://192.159.101.3326/jisu?useSSL123=False',
 	},
-	{key: 'spring.datasource.username', value: 'jisu-table'},
-	{key: 'spring.datasource.pw', value: 'asd'},
-	{key: '', value: ''},
-	{key: 'extra.row', value: 'extraValue'},
+	{
+		idx: 2,
+		key: 'spring.datasource.username',
+		value: 'jisu-table',
+		beforeKey: 'spring.datasource.username',
+		beforeValue: 'jisu-diff',
+	},
+	{
+		idx: 3,
+		key: 'spring.datasource.pw',
+		value: 'asd',
+		beforeKey: 'spring.datasource.password',
+		beforeValue: '123123',
+	},
+	{
+		idx: 4,
+		key: '',
+		value: '',
+		beforeKey: '',
+		beforeValue: '',
+	},
+	{
+		idx: 5,
+		key: 'extra.row',
+		value: 'extraValue',
+		beforeKey: '',
+		beforeValue: '',
+	},
 ];
 
 // -------------------------------------------------------------------
-// CompareTable 컴포넌트
+// CompareTable 컴포넌트 (단일 배열 사용)
 // -------------------------------------------------------------------
 export default function CompareTable() {
-	// -----------------------------
-	// State 관리: 좌측 데이터, 우측 데이터, 선택된 행
-	// -----------------------------
-	const [compareData, setCompareData] = useState(initialLeftData);
-	const [rightDataState, setRightDataState] = useState(initialRightData);
+	const [tableData, setTableData] = useState(initialData);
 	const [selectedRows, setSelectedRows] = useState([]);
 
-	// -----------------------------
-	// 이벤트 핸들러: 좌측 데이터 수정 (onBlur 시 commit)
-	// -----------------------------
+	// 왼쪽(key, value) 편집 핸들러
+	const handleEditKey = useCallback((idx, newValue) => {
+		setTableData((prevData) =>
+			prevData.map((item) =>
+				item.idx === idx ? {...item, key: newValue} : item,
+			),
+		);
+	}, []);
+
 	const handleEditValue = useCallback((idx, newValue) => {
-		setCompareData((prevData) =>
+		setTableData((prevData) =>
 			prevData.map((item) =>
-				item.idx === idx && !item.deleted ? {...item, value: newValue} : item,
+				item.idx === idx ? {...item, value: newValue} : item,
 			),
 		);
 	}, []);
 
-	const handleEditKey = useCallback((idx, newKey) => {
-		setCompareData((prevData) =>
-			prevData.map((item) =>
-				item.idx === idx && !item.deleted ? {...item, key: newKey} : item,
-			),
-		);
-	}, []);
-
-	// -----------------------------
-	// 이벤트 핸들러: 행 추가 (Add 버튼)
-	// -----------------------------
+	// 행 추가: 새로운 행은 모든 필드를 빈 문자열로 설정
 	const handleAddRow = useCallback(() => {
 		const newIdx =
-			compareData.length > 0
-				? Math.max(...compareData.map((d) => d.idx)) + 1
-				: 0;
-		const newLeftRow = {idx: newIdx, key: '', value: '', deleted: false};
-		const newRightRow = {key: '', value: ''};
+			tableData.length > 0 ? Math.max(...tableData.map((d) => d.idx)) + 1 : 0;
+		const newRow = {
+			idx: newIdx,
+			key: '',
+			value: '',
+			beforeKey: '',
+			beforeValue: '',
+		};
+		setTableData((prevData) => [...prevData, newRow]);
+	}, [tableData]);
 
-		setCompareData((prevData) => [...prevData, newLeftRow]);
-		setRightDataState((prevData) => [...prevData, newRightRow]);
-	}, [compareData]);
-
-	// -----------------------------
-	// 이벤트 핸들러: 선택된 행 삭제 (Delete Selected 버튼)
-	// -----------------------------
+	// 선택된 행 삭제:
+	// 우측(beforeKey, beforeValue)이 모두 없는 경우엔 행 전체를 삭제,
+	// 하나라도 있으면 좌측 데이터(key, value)만 빈 문자열로 업데이트
 	const handleDeleteSelected = useCallback(() => {
-		const newLeft = [];
-		const newRight = [];
-		const maxRows = Math.max(compareData.length, rightDataState.length);
-
-		for (let i = 0; i < maxRows; i++) {
-			const leftItem = compareData[i];
-			const rightItem = rightDataState[i];
-
-			if (leftItem && selectedRows.includes(leftItem.idx)) {
-				if (
-					rightItem &&
-					rightItem.key.trim() === '' &&
-					rightItem.value.trim() === ''
-				) {
-					continue;
+		const newData = tableData.reduce((acc, item) => {
+			if (selectedRows.includes(item.idx)) {
+				// 우측 데이터가 모두 없는 경우
+				if (!item.beforeKey.trim() && !item.beforeValue.trim()) {
+					return acc; // 해당 행 삭제
 				} else {
-					newLeft.push({...leftItem, key: '', value: '', deleted: false});
-					newRight.push(rightItem || {key: '', value: ''});
+					// 하나라도 존재하면 좌측 데이터만 삭제
+					acc.push({...item, key: '', value: ''});
+					return acc;
 				}
 			} else {
-				if (leftItem) newLeft.push(leftItem);
-				if (rightItem) newRight.push(rightItem);
+				acc.push(item);
+				return acc;
 			}
-		}
-
-		const reIndexedLeft = newLeft.map((item, i) => ({...item, idx: i}));
-		const reIndexedRight = newRight;
-		setCompareData(reIndexedLeft);
-		setRightDataState(reIndexedRight);
+		}, []);
+		// 재정렬
+		const reIndexed = newData.map((item, i) => ({...item, idx: i}));
+		setTableData(reIndexed);
 		setSelectedRows([]);
-	}, [compareData, rightDataState, selectedRows]);
+	}, [tableData, selectedRows]);
 
-	// -----------------------------
-	// 이벤트 핸들러: 전체 diff (모든 행에 대해 좌측 데이터를 우측 데이터로 업데이트)
-	// -----------------------------
+	// 전체 diff: 모든 행의 좌측 현재 값(key, value)을 우측의 기준값(beforeKey, beforeValue)으로 업데이트
 	const handleOverallDiff = useCallback(() => {
-		setCompareData((prevData) =>
-			prevData.map((leftItem) => {
-				const idx = leftItem.idx;
-				const rightItem = rightDataState[idx];
-				if (rightItem) {
-					return {...leftItem, key: rightItem.key, value: rightItem.value};
-				}
-				return leftItem;
-			}),
+		setTableData((prevData) =>
+			prevData.map((item) => ({
+				...item,
+				key: item.beforeKey,
+				value: item.beforeValue,
+			})),
 		);
-	}, [rightDataState]);
+	}, []);
 
-	// -----------------------------
-	// Combined Data 생성: 좌측과 우측 데이터셋의 최대 행 수 기준
-	// -----------------------------
-	const combinedData = useMemo(() => {
-		const maxRows = Math.max(compareData.length, rightDataState.length);
-		return Array.from({length: maxRows}, (_, idx) => ({idx}));
-	}, [compareData, rightDataState]);
-
-	// -----------------------------
-	// 전체 diff 버튼 렌더링 여부 계산: 모든 행의 좌측/우측 데이터가 동일하면 false
-	// -----------------------------
+	// 전체 diff 존재 여부: 하나라도 좌측과 우측 값이 다른 행이 있으면 true
 	const overallDiffExists = useMemo(() => {
-		const maxRows = Math.max(compareData.length, rightDataState.length);
-		for (let i = 0; i < maxRows; i++) {
-			const leftItem = compareData[i] || {};
-			const rightItem = rightDataState[i] || {};
-			if (
-				leftItem.key !== rightItem.key ||
-				leftItem.value !== rightItem.value
-			) {
-				return true;
-			}
-		}
-		return false;
-	}, [compareData, rightDataState]);
+		return tableData.some(
+			(item) => item.key !== item.beforeKey || item.value !== item.beforeValue,
+		);
+	}, [tableData]);
 
-	// -----------------------------
-	// 테이블 컬럼 구성
-	// -----------------------------
+	// 테이블 컬럼 구성 (왼쪽: key, value / 오른쪽: beforeKey, beforeValue)
 	const columns = useMemo(
 		() => [
-			// 체크박스 열
 			{
 				accessorKey: 'select',
 				header: () => (
@@ -306,14 +270,13 @@ export default function CompareTable() {
 						type='checkbox'
 						onChange={(e) => {
 							if (e.target.checked) {
-								setSelectedRows(combinedData.map((d) => d.idx));
+								setSelectedRows(tableData.map((d) => d.idx));
 							} else {
 								setSelectedRows([]);
 							}
 						}}
 						checked={
-							selectedRows.length === combinedData.length &&
-							combinedData.length > 0
+							selectedRows.length === tableData.length && tableData.length > 0
 						}
 					/>
 				),
@@ -335,39 +298,49 @@ export default function CompareTable() {
 					);
 				},
 			},
-			// 좌측 Key 열 (Editable)
+			// 왼쪽 편집 가능한 key 열
 			{
-				accessorKey: 'leftKey',
-				header: 'Left Key',
+				accessorKey: 'key',
+				header: 'Key',
 				cell: ({row}) => (
 					<TextInput
 						row={row}
-						data={compareData}
-						otherData={rightDataState}
+						data={tableData}
+						// 비교 대상은 오른쪽의 beforeKey
+						otherData={tableData.map((item) => ({
+							...item,
+							key: item.beforeKey,
+						}))}
 						field='key'
+						diffField='beforeKey'
 						onCommit={handleEditKey}
 						diffColor='lightgreen'
 						readOnly={false}
 					/>
 				),
 			},
-			// 좌측 Value 열 (Editable)
+			// 왼쪽 편집 가능한 value 열
 			{
-				accessorKey: 'leftValue',
-				header: 'Left Value',
+				accessorKey: 'value',
+				header: 'Value',
 				cell: ({row}) => (
 					<TextInput
 						row={row}
-						data={compareData}
-						otherData={rightDataState}
+						data={tableData}
+						// 비교 대상은 오른쪽의 beforeValue
+						otherData={tableData.map((item) => ({
+							...item,
+							value: item.beforeValue,
+						}))}
 						field='value'
+						diffField='beforeValue'
 						onCommit={handleEditValue}
 						diffColor='lightgreen'
 						readOnly={false}
 					/>
 				),
 			},
-			// 액션 열: 헤더와 셀 모두 DiffButton을 사용 (헤더는 overallDiffExists 전달)
+			// diff 액션 열
 			{
 				accessorKey: 'action',
 				header: () => (
@@ -375,43 +348,54 @@ export default function CompareTable() {
 						overallDiffExists={overallDiffExists}
 						onClick={handleOverallDiff}
 						title='전체 diff 실행'
+						style={{}}
 					/>
 				),
 				cell: ({row}) => (
 					<DiffButton
 						row={row}
-						compareData={compareData}
-						rightDataState={rightDataState}
-						setCompareData={setCompareData}
+						data={tableData}
+						setData={setTableData}
 						title='행 diff 실행'
+						style={{}}
 					/>
 				),
 			},
-			// 우측 Key 열 (ReadOnly)
+			// 오른쪽 읽기 전용 beforeKey 열
 			{
-				accessorKey: 'rightKey',
-				header: 'Right Key',
+				accessorKey: 'beforeKey',
+				header: 'Before Key',
 				cell: ({row}) => (
 					<TextInput
 						row={row}
-						data={rightDataState}
-						otherData={compareData}
-						field='key'
+						data={tableData}
+						// 비교 대상은 왼쪽의 key
+						otherData={tableData.map((item) => ({
+							...item,
+							beforeKey: item.key,
+						}))}
+						field='beforeKey'
+						diffField='key'
 						diffColor='lightcoral'
 						readOnly={true}
 					/>
 				),
 			},
-			// 우측 Value 열 (ReadOnly)
+			// 오른쪽 읽기 전용 beforeValue 열
 			{
-				accessorKey: 'rightValue',
-				header: 'Right Value',
+				accessorKey: 'beforeValue',
+				header: 'Before Value',
 				cell: ({row}) => (
 					<TextInput
 						row={row}
-						data={rightDataState}
-						otherData={compareData}
-						field='value'
+						data={tableData}
+						// 비교 대상은 왼쪽의 value
+						otherData={tableData.map((item) => ({
+							...item,
+							beforeValue: item.value,
+						}))}
+						field='beforeValue'
+						diffField='value'
 						diffColor='lightcoral'
 						readOnly={true}
 					/>
@@ -419,29 +403,22 @@ export default function CompareTable() {
 			},
 		],
 		[
-			compareData,
-			rightDataState,
-			combinedData,
+			tableData,
 			selectedRows,
+			overallDiffExists,
 			handleEditKey,
 			handleEditValue,
 			handleOverallDiff,
-			overallDiffExists,
 		],
 	);
 
-	// -----------------------------
 	// React Table 인스턴스 생성
-	// -----------------------------
 	const table = useReactTable({
-		data: combinedData,
+		data: tableData,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 	});
 
-	// -----------------------------
-	// 렌더링
-	// -----------------------------
 	return (
 		<div
 			style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}
