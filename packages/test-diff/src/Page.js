@@ -1,13 +1,12 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import CompareTable from './component/CompareTable';
 import CodeCompare from './component/CodeCompare';
+import CompareDiffTable from './component/CompareDiffTable';
 
-function Page(props) {
+function Page() {
 	return (
 		<div>
-			test 페이지
-			<CompareTable />
+			<CompareDiffTable />
+			{/*<CompareTable />*/}
 			<CodeCompare />
 		</div>
 	);

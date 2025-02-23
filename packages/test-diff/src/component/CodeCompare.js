@@ -237,7 +237,7 @@ const CodeCompare = () => {
 	}, []);
 
 	return (
-		<div className='container'>
+		<div className='text-container'>
 			<div className='editor-container'>
 				<h3 className='title'>최신 (좌측, 수정 가능 / 초록 하이라이팅)</h3>
 				<CodeMirror

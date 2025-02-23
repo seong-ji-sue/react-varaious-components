@@ -43,11 +43,19 @@ module.exports = () => {
 					],
 				},
 				{
-					test: /\.css$/,
-					use: ['style-loader', 'css-loader'],
+					test: /\.module\.scss$/, // ✅ CSS Modules는 "*.module.scss" 파일에만 적용
+					use: [
+						'style-loader',
+						{
+							loader: 'css-loader',
+							options: {modules: true},
+						},
+						'sass-loader',
+					],
 				},
 				{
-					test: /\.scss$/,
+					test: /\.scss$/, // ✅ 일반 SCSS 파일은 글로벌 스타일로 처리
+					exclude: /\.module\.scss$/,
 					use: ['style-loader', 'css-loader', 'sass-loader'],
 				},
 				{
