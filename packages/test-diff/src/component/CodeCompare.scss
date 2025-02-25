@@ -1,32 +1,66 @@
-/* CodeCompare.scss */
+/* ========================== */
+/* 라인 단위 (옅은 배경 + 테두리) */
+/* ========================== */
 
+/* 좌측 라인 배경: 옅은 빨강/분홍 + 회색 테두리 */
+.diff-line-red {
+  background-color: #ffecec;      /* 매우 옅은 붉은색 */
+  border: 1px solid #cccccc;     /* 얇은 회색 테두리 */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1; /* 문자 강조보다 뒤 */
+}
+
+/* 우측 라인 배경: 옅은 초록 + 회색 테두리 */
+.diff-line-green {
+  background-color: #ebffeb;      /* 매우 옅은 초록색 */
+  border: 1px solid #cccccc;      /* 얇은 회색 테두리 */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================== */
+/* 문자 단위 (진한 배경 or 회색) */
+/* ========================== */
+
+/* 좌측 문자 변경: 진한 빨강/분홍 */
+.diff-chars-red {
+  background-color: #ef9a9a; /* Material Red 200 정도 */
+  position: relative;
+  z-index: 2; /* 라인 배경보다 위 */
+}
+
+/* 우측 문자 변경: 진한 초록 */
+.diff-chars-green {
+  background-color: #a5d6a7; /* Material Green 200 정도 */
+  position: relative;
+  z-index: 2;
+}
+
+/* 공백만 다른 경우: 회색 */
+.diff-chars-whitespace {
+  background-color: #dcdcdc;
+  position: relative;
+  z-index: 2;
+}
+
+/* ========================== */
+/* 편집기 배치 스타일         */
+/* ========================== */
 .text-container {
   display: flex;
   gap: 1em;
-  padding: 1em;
 }
 
 .editor-container {
   flex: 1;
-  border: 1px solid #ddd;
-  padding: 0.5em;
+  display: flex;
+  flex-direction: column;
 }
 
-.title {
-  margin-bottom: 0.5em;
-}
-
-/* Global styles for diff highlighting and gutters */
-.cm-gutters {
-  background-color: #f5f5f5;
-  color: black;
-  border-right: 1px solid pink;
-}
-
-.diff-green {
-  background-color: #e0ffe0;
-}
-
-.diff-red {
-  background-color: #ffe0e0;
+.editor-container .title {
+  margin: 0 0 0.5em 0;
+  font-size: 1.1em;
+  font-weight: bold;
 }
