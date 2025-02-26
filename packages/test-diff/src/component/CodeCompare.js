@@ -14,24 +14,15 @@ import './CodeCompare.scss';
  * 예시 데이터
  * (질문에서 주신 공백 포함 버전)
  */
-const initialLeftText = `server:
-  port: 8080
-  host: localhost
-  
-  
-database:
-  name: oracledb
-  user: admin
+const initialLeftText = `1=1
+123a=1231a
+ZXCa=ZXCa
 `;
 
-const initialRightText = `server:
-  port: 8080
-  host: 129.0.0.1
-database:
-  name: oracledb
-  user: root
-  port: 8081
-  host: 127.0.1.1
+const initialRightText = `1=1
+123=123
+123a=1231a
+ZXC=ZXC
 `;
 
 /**
@@ -65,6 +56,7 @@ function computeDiffsDMP(leftText, rightText) {
 
 		// 문자 단위: diff-match-patch로 각 라인을 diff
 		const diffs = dmp.diff_main(leftLine, rightLine);
+		console.log('diffs', diffs);
 		dmp.diff_cleanupSemantic(diffs);
 
 		let leftPos = 0;
@@ -267,6 +259,14 @@ const CodeCompare = () => {
 			}
 			return computeDiffsDMP(leftText, rightText);
 		}, [leftText, rightText, showDiff]);
+
+	console.log(
+		'CodeCompare',
+		leftLineDiffSet,
+		rightLineDiffSet,
+		leftCharDiffs,
+		rightCharDiffs,
+	);
 
 	// 우측 편집기 참조 (화살표 클릭 시 사용)
 	const rightEditorRef = useRef(null);

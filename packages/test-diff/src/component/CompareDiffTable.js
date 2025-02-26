@@ -32,45 +32,30 @@ const initialData = [
 		value: '2e',
 		defaultKey: 'url',
 		defaultValue: '3',
-		keyState: null,
-		valueState: compareType.update,
-		isDiff: true,
 	},
 	{
 		key: '',
 		value: 'jisu-table',
 		defaultKey: 'react',
 		defaultValue: 'jisu-table',
-		keyState: compareType.create,
-		valueState: null,
-		isDiff: true,
 	},
 	{
 		key: 'oracle',
 		value: 'asd',
 		defaultKey: 'mysql',
 		defaultValue: '',
-		keyState: compareType.update,
-		valueState: compareType.delete,
-		isDiff: true,
 	},
 	{
 		key: '',
 		value: '',
 		defaultKey: '',
 		defaultValue: '',
-		keyState: null,
-		valueState: null,
-		isDiff: false,
 	},
 	{
 		key: 'extra.row',
 		value: 'extraValue',
 		defaultKey: '',
 		defaultValue: '',
-		keyState: compareType.delete,
-		valueState: compareType.delete,
-		isDiff: true,
 	},
 ];
 
@@ -107,6 +92,18 @@ const diffCol = {
 	cell: ({row}) => <DiffCell row={row} />,
 };
 
+const splitVersionArr = (items) => {
+	const currentArray = items.map(({key, value}) => ({key, value}));
+	// 이전 상태 배열 생성 (beforeKey가 존재하는 항목만 선택)
+	const previousArray = items
+		.filter(({defaultKey}) => defaultKey)
+		.map(({defaultKey, defaultValue}) => ({
+			key: defaultKey,
+			value: defaultValue,
+		}));
+	return [currentArray, previousArray];
+};
+
 const CompareDiffTable = () => {
 	const [isCompare, setIsCompare] = useState(false);
 
@@ -116,6 +113,13 @@ const CompareDiffTable = () => {
 		getCoreRowModel: getCoreRowModel(),
 	});
 
+	const onClickCompare = () => {
+		setIsCompare(true);
+		const [currentArray, previousArray] = splitVersionArr(initialData);
+		console.log(currentArray, previousArray);
+		console.log(diff(currentArray, previousArray));
+	};
+
 	return (
 		<div
 			style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}
@@ -123,9 +127,7 @@ const CompareDiffTable = () => {
 			<div style={{marginBottom: '10px'}}>
 				<button style={{marginRight: '10px'}}>Add</button>
 				<button>Delete Selected</button>
-				{!isCompare && (
-					<button onClick={() => setIsCompare(true)}>Compare</button>
-				)}
+				{!isCompare && <button onClick={onClickCompare}>Compare</button>}
 			</div>
 			<table border='1'>
 				<thead>

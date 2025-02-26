@@ -36,8 +36,8 @@ function transformData(data) {
 	let newIdx = 0;
 
 	data.forEach((item) => {
-		const leftObj = {key: item.key};
-		const rightObj = {key: item.defaultKey};
+		const leftObj = {key: item.key, value: item.value};
+		const rightObj = {key: item.defaultKey, value: item.defaultValue};
 		const differences = jsondiffpatch.diff(leftObj, rightObj);
 
 		if (!differences) {
