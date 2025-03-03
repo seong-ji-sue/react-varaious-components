@@ -7,12 +7,7 @@ import {
 } from '@tanstack/react-table';
 import TextBoxCell from '../cell/TextBoxCell';
 import DiffCell from '../cell/DiffCell';
-
-const compareType = {
-	update: 'update',
-	delete: 'delete',
-	create: 'create',
-};
+import {compareItems} from '../utils/diff';
 
 // -------------------------------------------------------------------
 // 초기 데이터 (예시)
@@ -21,41 +16,32 @@ const initialData = [
 	{
 		key: 'port',
 		value: '9000',
-		defaultKey: 'port',
-		defaultValue: '9000',
-		keyState: null,
-		valueState: null,
-		isDiff: false,
+		beforeKey: 'port',
+		beforeValue: '9000',
 	},
 	{
 		key: 'url',
 		value: '2e',
-		defaultKey: 'url',
-		defaultValue: '3',
+		beforeKey: 'url',
+		beforeValue: '3',
 	},
 	{
 		key: '',
 		value: 'jisu-table',
-		defaultKey: 'react',
-		defaultValue: 'jisu-table',
+		beforeKey: 'react',
+		beforeValue: 'jisu-table',
 	},
 	{
 		key: 'oracle',
 		value: 'asd',
-		defaultKey: 'mysql',
-		defaultValue: '',
+		beforeKey: 'mysql',
+		beforeValue: 'asd',
 	},
 	{
 		key: '',
 		value: '',
-		defaultKey: '',
-		defaultValue: '',
-	},
-	{
-		key: 'extra.row',
-		value: 'extraValue',
-		defaultKey: '',
-		defaultValue: '',
+		beforeKey: '12',
+		beforeValue: '33',
 	},
 ];
 
@@ -75,13 +61,13 @@ const newCols = [
 
 const prevCols = [
 	{
-		accessorKey: 'defaultKey',
-		header: 'Default Key',
+		accessorKey: 'beforeKey',
+		header: 'Before Key',
 		cell: ({row, column}) => <TextBoxCell row={row} column={column} readOnly />,
 	},
 	{
-		accessorKey: 'defaultValue',
-		header: 'Default Value',
+		accessorKey: 'beforeValue',
+		header: 'Before Value',
 		cell: ({row, column}) => <TextBoxCell row={row} column={column} readOnly />,
 	},
 ];
@@ -96,10 +82,10 @@ const splitVersionArr = (items) => {
 	const currentArray = items.map(({key, value}) => ({key, value}));
 	// 이전 상태 배열 생성 (beforeKey가 존재하는 항목만 선택)
 	const previousArray = items
-		.filter(({defaultKey}) => defaultKey)
-		.map(({defaultKey, defaultValue}) => ({
-			key: defaultKey,
-			value: defaultValue,
+		.filter(({beforeKey}) => beforeKey)
+		.map(({beforeKey, beforeValue}) => ({
+			key: beforeKey,
+			value: beforeValue,
 		}));
 	return [currentArray, previousArray];
 };
@@ -115,9 +101,8 @@ const CompareDiffTable = () => {
 
 	const onClickCompare = () => {
 		setIsCompare(true);
-		const [currentArray, previousArray] = splitVersionArr(initialData);
-		console.log(currentArray, previousArray);
-		console.log(diff(currentArray, previousArray));
+		const diff = compareItems(initialData);
+		console.log(diff);
 	};
 
 	return (

@@ -1,26 +1,45 @@
-/* diff2html 기본 스타일에 추가 오버라이딩 */
-
-.d2h-wrapper .d2h-del {
-  background-color: #ffecec !important; /* 옅은 빨강 박스 */
-  border: 1px solid #cccccc;
-  box-sizing: border-box;
+.compare-container {
+  text-align: center;
+  padding: 20px;
 }
 
-.d2h-wrapper .d2h-ins {
-  background-color: #ebffeb !important; /* 옅은 초록 박스 */
-  border: 1px solid #cccccc;
-  box-sizing: border-box;
+.editor-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
 }
 
-/* diff2html가 td, table 등에 적용하는 스타일에 추가로 border, margin, padding 조절 가능 */
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 48%;
+}
 
-/* 사용자가 원하는 스타일을 세부적으로 맞추려면
-   diff2html가 생성하는 각 요소(.d2h-code-line-del, .d2h-code-line-ins 등)를
-   직접 오버라이드 해주어야 합니다. */
+.button-container {
+  margin-top: 20px;
+}
 
-/* 예: 라인 번호 영역, +/- 표시 등 세부 색상 변경도 가능 */
+//.button {
+//  padding: 10px 15px;
+//  font-size: 16px;
+//  margin-right: 10px;
+//  cursor: pointer;
+//}
 
-/* 만약 "공백만 변경"을 회색으로 별도 표시하려면,
-   diff2html이 제공하는 구조를 직접 파싱하거나,
-   diff 로직을 직접 돌려서 HTML을 부분적으로 수정해야 합니다.
-   (diff2html 자체는 '공백만 변경'용 별도 클래스를 기본 제공하지 않음) */
+.error {
+  color: red;
+  font-weight: bold;
+}
+
+/* Diff 스타일 */
+.diff-insert {
+  background-color: #d4f4d2;
+  color: #228b22;
+  font-weight: bold;
+}
+
+.diff-delete {
+  background-color: #fdd;
+  color: #d9534f;
+  font-weight: bold;
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import './TextBoxCell.scss';
 
-const TextBoxCell = ({row, column, readOnly}) => {
+const TextBoxCell = ({row, column, readOnly = false}) => {
 	return (
 		<input
 			className={`text-box`}
