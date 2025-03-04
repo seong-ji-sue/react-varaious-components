@@ -172,10 +172,21 @@ const TestCompare = () => {
 		reader.onload = (e) => setYaml(e.target.result);
 		reader.readAsText(file);
 	};
-
 	return (
 		<div>
 			<h2>YAML 비교</h2>
+			<div className='button-container'>
+				<button onClick={() => setShowDiff(true)}>Compare</button>
+				<button
+					onClick={() => {
+						setOldYaml('');
+						setNewYaml('');
+						setShowDiff(false);
+					}}
+				>
+					Clear
+				</button>
+			</div>
 			<div className='editor-container'>
 				<div>
 					<input
@@ -221,19 +232,6 @@ const TestCompare = () => {
 						/>
 					)}
 				</div>
-			</div>
-
-			<div className='button-container'>
-				<button onClick={() => setShowDiff(true)}>Compare</button>
-				<button
-					onClick={() => {
-						setOldYaml('');
-						setNewYaml('');
-						setShowDiff(false);
-					}}
-				>
-					Clear
-				</button>
 			</div>
 		</div>
 	);

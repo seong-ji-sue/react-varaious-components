@@ -1,0 +1,15 @@
+.yaml-diff-container {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #fafafa;
+
+  .diff {
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+  }
+
+  .hunk {
+    margin: 5px 0;
+  }
+}

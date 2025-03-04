@@ -3,6 +3,7 @@ import CodeCompare from './component/CodeCompare';
 import CompareDiffTable from './component/CompareDiffTable';
 import CompareTable from './component/CompareTable';
 import TestCompare from './component/TestCompare';
+import YamlDiffView from './component/YamlDiffView';
 
 function Page() {
 	return (
@@ -11,6 +12,7 @@ function Page() {
 			<CompareTable />
 			<CodeCompare />
 			<TestCompare />
+			<YamlDiffView />
 		</div>
 	);
 }

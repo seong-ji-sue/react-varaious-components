@@ -8,34 +8,104 @@ import {
 	DIFF_INSERT,
 	DIFF_DELETE,
 } from 'diff-match-patch';
+import {parseDocument} from 'yaml';
 import './CodeCompare.scss';
 
-const initialLeftText = `apiVersion: apps/v1
-kind: Deployment
+const initialLeftText = `apiVersion: apps/v2
 metadata:
-  name: api-gateway-deployment
-  namespace: eddy-dev-zone
+     name: api-gateway-deployment
+     namespace: eddy-dev-zone
+kind: Deployment
 spec:
-  replicas: 2`;
+     replicas: '2'
+     selector:
+          matchLabels:
+               app: api-gateway
+     template:
+          metadata:
+               labels:
+                    app: api-gateway
+          spec:
+               containers: '[object Object]'
+               volumes: '[object Object],[object Object],[object Object]'
+`;
 
-const initialRightText = `apiVersion: apps/v2
-metadata:
-  name: api-gateway-deployment
-  namespace: eddy-dev-zone
+const initialRightText = `apiVersion: apps/v1
 kind: Deployment
+metadata:
+     name: api-gateway-deployment
+     namespace: eddy-dev-zone
 spec:
-  replicas: 3`;
+     replicas: 2
+     selector:
+          matchLabels:
+               app: api-gateway
+     template:
+          metadata:
+               labels:
+                    app: api-gateway
+          spec:
+               containers:
+                    -
+                         name: api-gateway-container
+                         image: 192.168.25.109:5000/eddy-api-gateway-dev:161
+                         resources:
+                              requests:
+                                   cpu: 500m
+                                   memory: 512Mi
+                              limits:
+                                   cpu: 500m
+                                   memory: 512Mi
+                         ports:
+                              -
+                                   containerPort: 30111
+                         env:
+                              -
+                                   name: TZ
+                                   value: Asia/Seoul
+                              -
+                                   name: SPRING_PROFILES_ACTIVE
+                                   value: dev
+                              -
+                                   name: JAVA_OPTS
+                                   value: >-
+                                        -XX:MinRAMPercentage=80.0
+                                        -XX:MaxRAMPercentage=80.0
+                         volumeMounts:
+                              -
+                                   mountPath: /logs
+                                   name: logs-storage
+                              -
+                                   mountPath: /config
+                                   name: config-storage
+                              -
+                                   mountPath: /cert
+                                   name: cert-storage
+               volumes:
+                    -
+                         name: logs-storage
+                         persistentVolumeClaim:
+                              claimName: api-gateway-logs-pvc
+                    -
+                         name: config-storage
+                         persistentVolumeClaim:
+                              claimName: api-gateway-config-pvc
+                    -
+                         name: cert-storage
+                         persistentVolumeClaim:
+                              claimName: api-gateway-cert-pvc
+`;
 
 /**
- * (1) 라인 순서 무시: "내용이 같은 라인"은 매칭 -> diff 제외
- * (2) 매칭되지 않은 라인은 unmatched -> diff
+ * (1) 라인 순서 무시: "내용이 같은 라인"은 매칭 → diff 제외
+ * (2) 매칭되지 않은 라인은 unmatched → diff
  * (3) "unmatched" 라인 중 "좌/우 인덱스가 동일"한 곳끼리 부분 문자열 diff
  */
 function computeDiffsIgnoringPosition(leftText, rightText) {
 	const leftLines = leftText.split('\n');
 	const rightLines = rightText.split('\n');
 
-	// 1) 좌측 라인 내용 -> 인덱스 목록
+	// 1) 좌측 라인 내용 → 인덱스 목록
 	const leftMap = new Map(); // Map<lineString, number[]>
 	for (let i = 0; i < leftLines.length; i++) {
 		const line = leftLines[i];
@@ -53,16 +123,13 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		const line = rightLines[j];
 		const idxList = leftMap.get(line);
 		if (!idxList || idxList.length === 0) {
-			// 좌측에 해당 내용이 없다 -> unmatched
-			continue;
+			continue; // unmatched
 		}
-		// 좌측에서 아직 매칭되지 않은 인덱스를 하나 사용
 		let matchedIndex = -1;
 		for (let k = 0; k < idxList.length; k++) {
 			const li = idxList[k];
 			if (!leftMatched[li]) {
 				matchedIndex = li;
-				// 이 인덱스를 소진
 				idxList.splice(k, 1);
 				break;
 			}
@@ -73,7 +140,7 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		}
 	}
 
-	// 3) unmatched 라인 -> diff 라인
+	// 3) unmatched 라인 → diff 라인
 	const leftLineDiffSet = new Set();
 	const rightLineDiffSet = new Set();
 	for (let i = 0; i < leftMatched.length; i++) {
@@ -87,7 +154,7 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		}
 	}
 
-	// 4) 문자 단위 diff: "좌/우에서 모두 unmatched이고, 인덱스 동일"인 경우만 부분 문자열 비교
+	// 4) 문자 단위 diff: "좌/우에서 모두 unmatched이고, 인덱스 동일"인 경우만 부분 문자열 diff
 	const leftCharDiffs = [];
 	const rightCharDiffs = [];
 	const dmp = new diff_match_patch();
@@ -97,7 +164,6 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		const leftUnmatched = i < leftMatched.length && !leftMatched[i];
 		const rightUnmatched = i < rightMatched.length && !rightMatched[i];
 		if (leftUnmatched && rightUnmatched) {
-			// 둘 다 unmatched, 인덱스 동일 -> 부분 문자열 diff
 			const lLine = leftLines[i] ?? '';
 			const rLine = rightLines[i] ?? '';
 			const diffs = dmp.diff_main(lLine, rLine);
@@ -136,15 +202,10 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		}
 	}
 
-	return {
-		leftLineDiffSet,
-		rightLineDiffSet,
-		leftCharDiffs,
-		rightCharDiffs,
-	};
+	return {leftLineDiffSet, rightLineDiffSet, leftCharDiffs, rightCharDiffs};
 }
 
-/** 라인 단위 하이라이트 (Decoration.line) */
+// --- Editor ViewPlugin 헬퍼 ---
 function lineDiffHighlighter(lineNumbers, className) {
 	return ViewPlugin.fromClass(
 		class {
@@ -152,9 +213,7 @@ function lineDiffHighlighter(lineNumbers, className) {
 				this.decorations = this.buildDeco(view);
 			}
 			update(update) {
-				if (update.docChanged) {
-					this.decorations = this.buildDeco(update.view);
-				}
+				if (update.docChanged) this.decorations = this.buildDeco(update.view);
 			}
 			buildDeco(view) {
 				const widgets = [];
@@ -171,21 +230,14 @@ function lineDiffHighlighter(lineNumbers, className) {
 	);
 }
 
-/** 문자 단위 하이라이트 (Decoration.mark) */
-function charDiffHighlighter(
-	charDiffs,
-	classForFullDiff,
-	classForWhitespaceDiff,
-) {
+function charDiffHighlighter(charDiffs, classFull, classWhitespace) {
 	return ViewPlugin.fromClass(
 		class {
 			constructor(view) {
 				this.decorations = this.buildDeco(view);
 			}
 			update(update) {
-				if (update.docChanged) {
-					this.decorations = this.buildDeco(update.view);
-				}
+				if (update.docChanged) this.decorations = this.buildDeco(update.view);
 			}
 			buildDeco(view) {
 				const ranges = [];
@@ -197,9 +249,7 @@ function charDiffHighlighter(
 					if (startPos < endPos) {
 						ranges.push(
 							Decoration.mark({
-								class: isWhitespaceDiff
-									? classForWhitespaceDiff
-									: classForFullDiff,
+								class: isWhitespaceDiff ? classWhitespace : classFull,
 							}).range(startPos, endPos),
 						);
 					}
@@ -211,29 +261,6 @@ function charDiffHighlighter(
 	);
 }
 
-/** 우측 화살표 위젯 (←) */
-class ClickableArrowWidget extends WidgetType {
-	constructor(lineNumber, onArrowClick) {
-		super();
-		this.lineNumber = lineNumber;
-		this.onArrowClick = onArrowClick;
-	}
-	toDOM() {
-		const span = document.createElement('span');
-		span.textContent = '←';
-		span.style.color = 'red';
-		span.style.fontWeight = 'bold';
-		span.style.cursor = 'pointer';
-		span.onclick = (e) => {
-			e.preventDefault();
-			e.stopPropagation();
-			this.onArrowClick(this.lineNumber);
-		};
-		return span;
-	}
-}
-
-/** 우측 unmatched 라인에 화살표 표시 */
 function diffWidgetMarker(diffLines, onArrowClick) {
 	return ViewPlugin.fromClass(
 		class {
@@ -241,9 +268,7 @@ function diffWidgetMarker(diffLines, onArrowClick) {
 				this.decorations = this.buildDeco(view);
 			}
 			update(update) {
-				if (update.docChanged) {
-					this.decorations = this.buildDeco(update.view);
-				}
+				if (update.docChanged) this.decorations = this.buildDeco(update.view);
 			}
 			buildDeco(view) {
 				const widgets = [];
@@ -265,15 +290,111 @@ function diffWidgetMarker(diffLines, onArrowClick) {
 	);
 }
 
+class ClickableArrowWidget extends WidgetType {
+	constructor(lineNumber, onArrowClick) {
+		super();
+		this.lineNumber = lineNumber;
+		this.onArrowClick = onArrowClick;
+	}
+	toDOM() {
+		const span = document.createElement('span');
+		span.textContent = '←';
+		span.style.color = 'red';
+		span.style.fontWeight = 'bold';
+		span.style.cursor = 'pointer';
+		span.onclick = (e) => {
+			e.preventDefault();
+			e.stopPropagation();
+			this.onArrowClick(this.lineNumber);
+		};
+		return span;
+	}
+}
+
+// --- Editor 확장 헬퍼 함수 ---
+function getLeftExtensions(
+	showDiff,
+	leftLineDiffSet,
+	leftCharDiffs,
+	rightEditorRef,
+) {
+	const exts = [yaml()];
+	if (showDiff) {
+		exts.push(lineDiffHighlighter(leftLineDiffSet, 'diff-line-red'));
+		exts.push(
+			charDiffHighlighter(
+				leftCharDiffs,
+				'diff-chars-red',
+				'diff-chars-whitespace',
+			),
+		);
+	}
+	exts.push(
+		EditorView.updateListener.of((update) => {
+			if (update.selectionSet && rightEditorRef.current) {
+				const pos = update.state.selection.main.head;
+				const lineNumber = update.state.doc.lineAt(pos).number;
+				const rightState = rightEditorRef.current.state;
+				if (lineNumber <= rightState.doc.lines) {
+					const line = rightState.doc.line(lineNumber);
+					rightEditorRef.current.dispatch({
+						selection: {anchor: line.from, head: line.to},
+					});
+				}
+			}
+		}),
+	);
+	return exts;
+}
+
+function getRightExtensions(
+	showDiff,
+	rightLineDiffSet,
+	rightCharDiffs,
+	onArrowClick,
+) {
+	const exts = [yaml()];
+	if (showDiff) {
+		exts.push(lineDiffHighlighter(rightLineDiffSet, 'diff-line-green'));
+		exts.push(
+			charDiffHighlighter(
+				rightCharDiffs,
+				'diff-chars-green',
+				'diff-chars-whitespace',
+			),
+		);
+		exts.push(diffWidgetMarker(rightLineDiffSet, onArrowClick));
+	}
+	exts.push(
+		EditorView.editable.of(false),
+		EditorView.theme({
+			'.cm-selectionMatch': {backgroundColor: 'transparent !important'},
+			'.cm-selectionMatch *': {backgroundColor: 'transparent !important'},
+		}),
+		EditorView.domEventHandlers({
+			mousedown: (e) => {
+				e.preventDefault();
+				return true;
+			},
+			mouseup: (e) => {
+				e.preventDefault();
+				return true;
+			},
+			mousemove: (e) => {
+				e.preventDefault();
+				return true;
+			},
+		}),
+	);
+	return exts;
+}
+
+// --- Main Component ---
 export default function CodeCompare() {
 	const [showDiff, setShowDiff] = useState(false);
-
-	// 좌측(최신) 텍스트
 	const [leftText, setLeftText] = useState(initialLeftText);
-	// 우측(이전) 텍스트 (읽기 전용)
 	const [rightText] = useState(initialRightText);
 
-	// Compare 시에만 diff 계산
 	const {leftLineDiffSet, rightLineDiffSet, leftCharDiffs, rightCharDiffs} =
 		useMemo(() => {
 			if (!showDiff) {
@@ -287,28 +408,47 @@ export default function CodeCompare() {
 			return computeDiffsIgnoringPosition(leftText, rightText);
 		}, [showDiff, leftText, rightText]);
 
-	// 우측 에디터 참조 (화살표 클릭 시 사용)
 	const rightEditorRef = useRef(null);
 
 	/**
-	 * 화살표 클릭 -> 해당 라인을 우측 내용으로 교체
-	 * (unmatched 라인만 화살표가 있음)
+	 * 화살표 클릭 시, 우측 라인에서 key를 추출하여,
+	 * 좌측 전체에서 동일 key가 있으면 모두 찾아 교체.
+	 * 동일 key가 없으면 해당 위치에 새 라인을 삽입.
 	 */
 	const onArrowClick = useCallback(
 		(lineNumber) => {
 			const leftLines = leftText.split('\n');
 			const rightLines = rightText.split('\n');
-			if (lineNumber - 1 < rightLines.length) {
-				leftLines[lineNumber - 1] = rightLines[lineNumber - 1];
+			if (lineNumber - 1 >= rightLines.length) return;
+			const rightContent = rightLines[lineNumber - 1];
+			const match = rightContent.match(/^(\s*\S+)\s*:/);
+			if (match) {
+				const keyName = match[1].trim();
+				let found = false;
+				// 좌측 전체에서 동일 key를 가진 모든 라인을 찾아 교체 (위치 상관없이)
+				for (let i = 0; i < leftLines.length; i++) {
+					const leftMatch = leftLines[i].match(/^(\s*\S+)\s*:/);
+					if (leftMatch && leftMatch[1].trim() === keyName) {
+						leftLines[i] = rightContent;
+						found = true;
+					}
+				}
+				if (!found) {
+					// 동일 key가 없으면, 해당 위치에 새 라인을 삽입
+					const insertIndex = Math.min(lineNumber - 1, leftLines.length);
+					leftLines.splice(insertIndex, 0, rightContent);
+				}
+				setLeftText(leftLines.join('\n'));
+			} else {
+				// key: 형태가 아니면, 새 라인 삽입
+				const insertIndex = Math.min(lineNumber - 1, leftLines.length);
+				leftLines.splice(insertIndex, 0, rightContent);
 				setLeftText(leftLines.join('\n'));
 			}
 		},
 		[leftText, rightText],
 	);
 
-	/**
-	 * Replace All -> unmatched 라인 전부 우측 내용으로 교체
-	 */
 	const handleReplaceAll = useCallback(() => {
 		const leftLines = leftText.split('\n');
 		const rightLines = rightText.split('\n');
@@ -320,81 +460,26 @@ export default function CodeCompare() {
 		setLeftText(leftLines.join('\n'));
 	}, [leftText, rightText, rightLineDiffSet]);
 
-	// 좌측 에디터 확장
-	const leftExtensions = useMemo(() => {
-		const exts = [yaml()];
-		if (showDiff) {
-			// 라인 단위 (빨간)
-			exts.push(lineDiffHighlighter(leftLineDiffSet, 'diff-line-red'));
-			// 문자 단위 (빨간/회색)
-			exts.push(
-				charDiffHighlighter(
-					leftCharDiffs,
-					'diff-chars-red',
-					'diff-chars-whitespace',
-				),
-			);
-		}
-		// selection 연동 (기존)
-		exts.push(
-			EditorView.updateListener.of((update) => {
-				if (update.selectionSet && rightEditorRef.current) {
-					const pos = update.state.selection.main.head;
-					const lineNumber = update.state.doc.lineAt(pos).number;
-					const rightState = rightEditorRef.current.state;
-					if (lineNumber <= rightState.doc.lines) {
-						const line = rightState.doc.line(lineNumber);
-						rightEditorRef.current.dispatch({
-							selection: {anchor: line.from, head: line.to},
-						});
-					}
-				}
-			}),
-		);
-		return exts;
-	}, [showDiff, leftLineDiffSet, leftCharDiffs]);
-
-	// 우측 에디터 확장
-	const rightExtensions = useMemo(() => {
-		const exts = [yaml()];
-		if (showDiff) {
-			// 라인 단위 (초록)
-			exts.push(lineDiffHighlighter(rightLineDiffSet, 'diff-line-green'));
-			// 문자 단위 (초록/회색)
-			exts.push(
-				charDiffHighlighter(
-					rightCharDiffs,
-					'diff-chars-green',
-					'diff-chars-whitespace',
-				),
-			);
-			// 화살표 표시
-			exts.push(diffWidgetMarker(rightLineDiffSet, onArrowClick));
-		}
-		// 읽기 전용 + selection 숨김
-		exts.push(
-			EditorView.editable.of(false),
-			EditorView.theme({
-				'.cm-selectionMatch': {backgroundColor: 'transparent !important'},
-				'.cm-selectionMatch *': {backgroundColor: 'transparent !important'},
-			}),
-			EditorView.domEventHandlers({
-				mousedown: (event) => {
-					event.preventDefault();
-					return true;
-				},
-				mouseup: (event) => {
-					event.preventDefault();
-					return true;
-				},
-				mousemove: (event) => {
-					event.preventDefault();
-					return true;
-				},
-			}),
-		);
-		return exts;
-	}, [showDiff, rightLineDiffSet, rightCharDiffs, onArrowClick]);
+	const leftExtensions = useMemo(
+		() =>
+			getLeftExtensions(
+				showDiff,
+				leftLineDiffSet,
+				leftCharDiffs,
+				rightEditorRef,
+			),
+		[showDiff, leftLineDiffSet, leftCharDiffs, rightEditorRef],
+	);
+	const rightExtensions = useMemo(
+		() =>
+			getRightExtensions(
+				showDiff,
+				rightLineDiffSet,
+				rightCharDiffs,
+				onArrowClick,
+			),
+		[showDiff, rightLineDiffSet, rightCharDiffs, onArrowClick],
+	);
 
 	return (
 		<div>
