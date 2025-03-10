@@ -141,55 +141,37 @@ function getYamlDiff(leftYaml, rightYaml) {
  */
 function getNodeByPath(node, path) {
 	if (!node || path.length === 0) {
-		console.log('getNodeByPath: reached end of path or node is null', node);
 		return node;
 	}
 	const [key, ...restPath] = path;
-	console.log(
-		'getNodeByPath: current node type:',
-		node.type,
-		' | key:',
-		key,
-		' | restPath:',
-		restPath,
-	);
 
 	// Mapping node인 경우
 	if (node && node.type === 'MAP' && Array.isArray(node.items)) {
 		for (const item of node.items) {
 			if (item.key && item.key.value === key) {
-				console.log('Found matching key in MAP:', item.key.value);
 				return getNodeByPath(item.value, restPath);
 			}
 		}
-		console.log('No matching key found in MAP for:', key);
 	}
 	// Sequence node인 경우 (path의 key가 숫자일 것으로 기대)
 	if (node && node.type === 'SEQ' && Array.isArray(node.items)) {
 		const index = Number(key);
 		if (!isNaN(index) && node.items[index] !== undefined) {
-			console.log('Found matching index in SEQ:', index);
 			return getNodeByPath(node.items[index], restPath);
 		} else {
 			console.log('Index not found in SEQ for key:', key);
 		}
 	}
-	console.log('getNodeByPath: returning null for key:', key);
 	return null;
 }
 
 function getLine(doc, path) {
-	console.log('getLine called with path:', path);
 	// AST의 구조 확인: 보통 최상위 노드는 DOCUMENT 타입으로 감싸져 있을 수 있습니다.
 	const contents = doc.contents;
-	console.log('doc.contents:', contents);
 	const root = Array.isArray(contents) ? contents[0] : contents;
-	console.log('root node:', root);
 	const targetNode = getNodeByPath(root, path);
-	console.log('targetNode:', targetNode);
 	if (targetNode && targetNode.range && doc.lineCounter) {
 		const pos = doc.lineCounter.linePos(targetNode.range[0]);
-		console.log('Line position:', pos);
 		return pos.line;
 	}
 	return null;
@@ -243,7 +225,6 @@ const computeDiffs = (oldText, newText) => {
 	let resultOld = '';
 	let resultNew = '';
 
-	console.log('diffs', diffs);
 	diffs.forEach(([op, text]) => {
 		if (op === DIFF_INSERT) {
 			resultNew += `<span class="diff-insert">${text}</span>`;
@@ -267,8 +248,6 @@ const TestCompare = () => {
 	const oldYamlValidation = useMemo(() => validateYaml(oldYaml), [oldYaml]);
 	const newYamlValidation = useMemo(() => validateYaml(newYaml), [newYaml]);
 
-	console.log('getYamlDiff', getYamlDiff(newYaml, oldYaml));
-
 	// Diff 비교 결과
 	const yamlDiff = useMemo(
 		() => computeDiffs(oldYaml, newYaml),
@@ -279,8 +258,6 @@ const TestCompare = () => {
 		() => getYamlDiffWithLineNumbers(oldYaml, newYaml),
 		[oldYaml, newYaml],
 	);
-
-	console.log(yamlDiffDeep);
 
 	// 파일 업로드 핸들러
 	const handleFileUpload = (event, setYaml) => {

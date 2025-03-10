@@ -8,35 +8,82 @@ import {
 	DIFF_INSERT,
 	DIFF_DELETE,
 } from 'diff-match-patch';
-import {parseDocument} from 'yaml';
 import './CodeCompare.scss';
+import * as jsYaml from 'js-yaml';
+import * as deepDiff from 'deep-diff';
+import {load as parseYamlAST, Kind} from 'yaml-ast-parser';
+import {
+	assign,
+	cloneDeep,
+	flatMap,
+	forEach,
+	get,
+	isNumber,
+	reduce,
+	set,
+	uniq,
+} from 'lodash-es';
 
-const initialLeftText = `apiVersion: apps/v2
-metadata:
-     name: api-gateway-deployment
-     namespace: eddy-dev-zone
+const initialLeftText = `apiVersion: apps/v1
 kind: Deployment
+metadata:
+  name: api-gateway-deployment
+  namespace: eddy-dev-zone
 spec:
-     replicas: '2'
-     selector:
-          matchLabels:
-               app: api-gateway
-     template:
-          metadata:
-               labels:
-                    app: api-gateway
-          spec:
-               containers: '[object Object]'
-               volumes: '[object Object],[object Object],[object Object]'
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway-container
+        image: 192.168.25.109:5000/eddy-api-gateway-dev:161
+        resources:
+          requests:
+            cpu: "500m"  # 0.1 CPU (100 millicpu)
+            memory: "512Mi"  # 256 MiB (Mebibytes)
+          limits:
+            cpu: "500m"  # 0.5 CPU (500 millicpu)
+            memory: "512Mi"  # 512 MiB (Mebibytes)
+        ports:
+        - containerPort: 30111
+        env:
+        - name: TZ
+          value: "Asia/Seoul"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "dev"
+        - name: JAVA_OPTS
+          value: "-XX:MinRAMPercentage=80.0 -XX:MaxRAMPercentage=80.0"
+          #value: "-Xmx512m -Xms512m"
+        volumeMounts:
+        - mountPath: /logs
+          name: logs-storage
+        - mountPath: /config
+          name: config-storage
+        - mountPath: /cert
+          name: cert-storage
+      volumes:
+      - name: logs-storage
+        persistentVolumeClaim:
+          claimName: api-gateway-logs-pvc
+      - name: config-storage
+        persistentVolumeClaim:
+          claimName: api-gateway-config-pvc
+      - name: cert-storage
+        persistentVolumeClaim:
+          claimName: api-gateway-cert-pvc
+      #nodeName: worker0
 `;
 
 const initialRightText = `apiVersion: apps/v1
 kind: Deployment
 metadata:
-     name: api-gateway-deployment
-     namespace: eddy-dev-zone
+     name: api-gateway-deployment2
 spec:
-     replicas: 2
      selector:
           matchLabels:
                app: api-gateway
@@ -56,9 +103,6 @@ spec:
                               limits:
                                    cpu: 500m
                                    memory: 512Mi
-                         ports:
-                              -
-                                   containerPort: 30111
                          env:
                               -
                                    name: TZ
@@ -66,36 +110,129 @@ spec:
                               -
                                    name: SPRING_PROFILES_ACTIVE
                                    value: dev
-                              -
-                                   name: JAVA_OPTS
-                                   value: >-
-                                        -XX:MinRAMPercentage=80.0
-                                        -XX:MaxRAMPercentage=80.0
-                         volumeMounts:
-                              -
-                                   mountPath: /logs
-                                   name: logs-storage
-                              -
-                                   mountPath: /config
-                                   name: config-storage
-                              -
-                                   mountPath: /cert
-                                   name: cert-storage
                volumes:
                     -
                          name: logs-storage
-                         persistentVolumeClaim:
+                         persistentVolumeClaim2:
                               claimName: api-gateway-logs-pvc
-                    -
-                         name: config-storage
-                         persistentVolumeClaim:
-                              claimName: api-gateway-config-pvc
-                    -
-                         name: cert-storage
-                         persistentVolumeClaim:
-                              claimName: api-gateway-cert-pvc
 `;
 
+// YAML 텍스트에서 특정 위치(position)의 라인 번호를 반환합니다.
+function getLineNumber(yamlText, position) {
+	return yamlText.slice(0, position).split('\n').length;
+}
+
+// AST의 MAP, SEQ 노드를 재귀적으로 순회하면서
+// 각 노드의 전체 경로(fullKey), 값(value), 그리고 라인 번호(line)를 평탄화된 객체로 반환합니다.
+function flattenAST(node, yamlText, parent = '') {
+	if (!node) return {};
+	let result = {};
+
+	// MAP 노드 처리
+	if (node.kind === Kind.MAP) {
+		forEach(node.mappings, (mapping) => {
+			if (!mapping.key) return;
+			const key = mapping.key.value;
+			const fullKey = parent ? `${parent}.${key}` : key;
+			const line = getLineNumber(yamlText, mapping.key.startPosition);
+			const value = mapping.value ? mapping.value.value : undefined;
+			result[fullKey] = {value, line};
+			// 하위 노드가 MAP이나 SEQ라면 재귀 호출
+			if (
+				mapping.value &&
+				(mapping.value.kind === Kind.MAP || mapping.value.kind === Kind.SEQ)
+			) {
+				assign(result, flattenAST(mapping.value, yamlText, fullKey));
+			}
+		});
+	}
+	// SEQ 노드 처리
+	else if (node.kind === Kind.SEQ) {
+		forEach(node.items, (item, i) => {
+			const fullKey = `${parent}[${i}]`;
+			const line = getLineNumber(yamlText, item.startPosition);
+			const value = item.value !== undefined ? item.value : item;
+			result[fullKey] = {value, line};
+			// 하위 노드가 MAP이나 SEQ라면 재귀 호출
+			if (item && (item.kind === Kind.MAP || item.kind === Kind.SEQ)) {
+				assign(result, flattenAST(item, yamlText, fullKey));
+			}
+		});
+	}
+	return result;
+}
+
+// diff.path 배열을 "a.b[0].c" 형태의 문자열로 변환합니다.
+function buildKey(pathArray) {
+	return reduce(
+		pathArray,
+		(acc, cur) =>
+			isNumber(cur) ? `${acc}[${cur}]` : acc ? `${acc}.${cur}` : cur,
+		'',
+	);
+}
+
+// diff 객체에 AST 평탄화 결과(leftFlat, rightFlat)를 참조하여
+// leftLine, rightLine (및 배열 아이템의 경우 item.leftLine, item.rightLine)을 주입합니다.
+function annotateDiffsWithLine(diffs, leftFlat, rightFlat) {
+	const annotated = cloneDeep(diffs);
+	forEach(annotated, (diff) => {
+		console.log(diff);
+		// 배열 요소 변경(diff.kind === 'A')
+		if (diff.kind === 'A' && isNumber(diff.index)) {
+			const parentKey = buildKey(diff.path);
+			const fullKey = `${parentKey}[${diff.index}]`;
+			set(diff, 'item.leftLine', get(leftFlat, [fullKey, 'line']));
+			set(diff, 'item.rightLine', get(rightFlat, [fullKey, 'line']));
+			set(diff, 'leftLine', get(leftFlat, [parentKey, 'line']));
+			set(diff, 'rightLine', get(rightFlat, [parentKey, 'line']));
+		}
+		// 일반 객체 변경(diff.path 존재)
+		else if (diff.path) {
+			const key = buildKey(diff.path);
+			set(diff, 'leftLine', get(leftFlat, [key, 'line']));
+			set(diff, 'rightLine', get(rightFlat, [key, 'line']));
+		}
+	});
+	return annotated;
+}
+
+// YAML 문자열 두 개를 비교하여 diff와 각 변경점이 속한 라인 번호 목록을 반환합니다.
+function getYamlDiff(leftYaml, rightYaml) {
+	// YAML 객체 파싱
+	const leftObj = jsYaml.load(leftYaml);
+	const rightObj = jsYaml.load(rightYaml);
+	const diffs = deepDiff.diff(leftObj, rightObj) || [];
+
+	console.log(diffs);
+
+	// AST 파싱 후 평탄화 진행
+	const leftAST = parseYamlAST(leftYaml);
+	const rightAST = parseYamlAST(rightYaml);
+	const leftFlat = flattenAST(leftAST, leftYaml);
+	const rightFlat = flattenAST(rightAST, rightYaml);
+
+	// diff 객체에 라인 번호 주입
+	const resultDiff = annotateDiffsWithLine(diffs, leftFlat, rightFlat);
+
+	// 모든 diff 항목의 라인 번호를 Set에 모아 중복 제거
+	const leftLineSet = new Set();
+	const rightLineSet = new Set();
+	forEach(resultDiff, (diff) => {
+		if (diff.leftLine != null) leftLineSet.add(diff.leftLine);
+		if (diff.rightLine != null) rightLineSet.add(diff.rightLine);
+		if (diff.item) {
+			if (diff.item.leftLine != null) leftLineSet.add(diff.item.leftLine);
+			if (diff.item.rightLine != null) rightLineSet.add(diff.item.rightLine);
+		}
+	});
+
+	// 정렬된 배열로 변환하여 반환
+	return {
+		leftLineList: Array.from(leftLineSet).sort((a, b) => a - b),
+		rightLineList: Array.from(rightLineSet).sort((a, b) => a - b),
+	};
+}
 /**
  * (1) 라인 순서 무시: "내용이 같은 라인"은 매칭 → diff 제외
  * (2) 매칭되지 않은 라인은 unmatched → diff
@@ -137,20 +274,6 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		if (matchedIndex !== -1) {
 			leftMatched[matchedIndex] = true;
 			rightMatched[j] = true;
-		}
-	}
-
-	// 3) unmatched 라인 → diff 라인
-	const leftLineDiffSet = new Set();
-	const rightLineDiffSet = new Set();
-	for (let i = 0; i < leftMatched.length; i++) {
-		if (!leftMatched[i]) {
-			leftLineDiffSet.add(i + 1); // 1-based
-		}
-	}
-	for (let j = 0; j < rightMatched.length; j++) {
-		if (!rightMatched[j]) {
-			rightLineDiffSet.add(j + 1);
 		}
 	}
 
@@ -202,7 +325,7 @@ function computeDiffsIgnoringPosition(leftText, rightText) {
 		}
 	}
 
-	return {leftLineDiffSet, rightLineDiffSet, leftCharDiffs, rightCharDiffs};
+	return {leftCharDiffs, rightCharDiffs};
 }
 
 // --- Editor ViewPlugin 헬퍼 ---
@@ -218,7 +341,7 @@ function lineDiffHighlighter(lineNumbers, className) {
 			buildDeco(view) {
 				const widgets = [];
 				for (let i = 1; i <= view.state.doc.lines; i++) {
-					if (lineNumbers.has(i)) {
+					if (lineNumbers.includes(i)) {
 						const line = view.state.doc.line(i);
 						widgets.push(Decoration.line({class: className}).range(line.from));
 					}
@@ -273,7 +396,7 @@ function diffWidgetMarker(diffLines, onArrowClick) {
 			buildDeco(view) {
 				const widgets = [];
 				for (let i = 1; i <= view.state.doc.lines; i++) {
-					if (diffLines.has(i)) {
+					if (diffLines.includes(i)) {
 						const line = view.state.doc.line(i);
 						widgets.push(
 							Decoration.widget({
@@ -314,13 +437,13 @@ class ClickableArrowWidget extends WidgetType {
 // --- Editor 확장 헬퍼 함수 ---
 function getLeftExtensions(
 	showDiff,
-	leftLineDiffSet,
+	leftLineList,
 	leftCharDiffs,
 	rightEditorRef,
 ) {
 	const exts = [yaml()];
 	if (showDiff) {
-		exts.push(lineDiffHighlighter(leftLineDiffSet, 'diff-line-red'));
+		exts.push(lineDiffHighlighter(leftLineList, 'diff-line-red'));
 		exts.push(
 			charDiffHighlighter(
 				leftCharDiffs,
@@ -349,13 +472,13 @@ function getLeftExtensions(
 
 function getRightExtensions(
 	showDiff,
-	rightLineDiffSet,
+	rightLineList,
 	rightCharDiffs,
 	onArrowClick,
 ) {
 	const exts = [yaml()];
 	if (showDiff) {
-		exts.push(lineDiffHighlighter(rightLineDiffSet, 'diff-line-green'));
+		exts.push(lineDiffHighlighter(rightLineList, 'diff-line-green'));
 		exts.push(
 			charDiffHighlighter(
 				rightCharDiffs,
@@ -363,7 +486,7 @@ function getRightExtensions(
 				'diff-chars-whitespace',
 			),
 		);
-		exts.push(diffWidgetMarker(rightLineDiffSet, onArrowClick));
+		exts.push(diffWidgetMarker(rightLineList, onArrowClick));
 	}
 	exts.push(
 		EditorView.editable.of(false),
@@ -389,23 +512,36 @@ function getRightExtensions(
 	return exts;
 }
 
+const formatYaml = (data, type) => {
+	if (!data) return '';
+
+	const doc = jsYaml.load(data);
+	return jsYaml.dump(doc, {
+		indent: 2,
+		sortKeys: false,
+	});
+};
+
 // --- Main Component ---
 export default function CodeCompare() {
 	const [showDiff, setShowDiff] = useState(false);
-	const [leftText, setLeftText] = useState(initialLeftText);
-	const [rightText] = useState(initialRightText);
+	const [leftText, setLeftText] = useState(formatYaml(initialLeftText));
+	const [rightText] = useState(formatYaml(initialRightText));
 
-	const {leftLineDiffSet, rightLineDiffSet, leftCharDiffs, rightCharDiffs} =
+	const {leftLineList, rightLineList, leftCharDiffs, rightCharDiffs} =
 		useMemo(() => {
 			if (!showDiff) {
 				return {
-					leftLineDiffSet: new Set(),
-					rightLineDiffSet: new Set(),
+					leftLineList: [],
+					rightLineList: [],
 					leftCharDiffs: [],
 					rightCharDiffs: [],
 				};
 			}
-			return computeDiffsIgnoringPosition(leftText, rightText);
+			return {
+				...computeDiffsIgnoringPosition(leftText, rightText),
+				...getYamlDiff(leftText, rightText),
+			};
 		}, [showDiff, leftText, rightText]);
 
 	const rightEditorRef = useRef(null);
@@ -452,33 +588,23 @@ export default function CodeCompare() {
 	const handleReplaceAll = useCallback(() => {
 		const leftLines = leftText.split('\n');
 		const rightLines = rightText.split('\n');
-		rightLineDiffSet.forEach((lineNumber) => {
+		rightLineList.forEach((lineNumber) => {
 			if (lineNumber - 1 < rightLines.length) {
 				leftLines[lineNumber - 1] = rightLines[lineNumber - 1];
 			}
 		});
 		setLeftText(leftLines.join('\n'));
-	}, [leftText, rightText, rightLineDiffSet]);
+	}, [leftText, rightText, rightLineList]);
 
 	const leftExtensions = useMemo(
 		() =>
-			getLeftExtensions(
-				showDiff,
-				leftLineDiffSet,
-				leftCharDiffs,
-				rightEditorRef,
-			),
-		[showDiff, leftLineDiffSet, leftCharDiffs, rightEditorRef],
+			getLeftExtensions(showDiff, leftLineList, leftCharDiffs, rightEditorRef),
+		[showDiff, rightLineList, leftCharDiffs, rightEditorRef],
 	);
 	const rightExtensions = useMemo(
 		() =>
-			getRightExtensions(
-				showDiff,
-				rightLineDiffSet,
-				rightCharDiffs,
-				onArrowClick,
-			),
-		[showDiff, rightLineDiffSet, rightCharDiffs, onArrowClick],
+			getRightExtensions(showDiff, rightLineList, rightCharDiffs, onArrowClick),
+		[showDiff, rightLineList, rightCharDiffs, onArrowClick],
 	);
 
 	return (

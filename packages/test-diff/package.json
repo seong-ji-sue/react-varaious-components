@@ -43,6 +43,7 @@
     "style-loader": "^4.0.0",
     "url-loader": "^4.1.1",
     "yaml": "^2.7.0",
+    "yaml-ast-parser": "^0.0.43",
     "yup": "^1.6.1"
   },
   "devDependencies": {
