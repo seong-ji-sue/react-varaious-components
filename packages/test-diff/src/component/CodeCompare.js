@@ -197,6 +197,34 @@ function annotateDiffsWithLine(diffs, leftFlat, rightFlat) {
 	return annotated;
 }
 
+function transformObject(input) {
+	const output = {};
+	Object.keys(input).forEach((key) => {
+		const {value} = input[key];
+		// value가 객체이고 null이 아닐 경우 undefined 할당, 그렇지 않으면 value 유지
+		output[key] =
+			value !== null && typeof value === 'object' ? undefined : value;
+	});
+	return output;
+}
+
+function addLineInfoToDiffs(diffArray, leftFlat, rightFlat) {
+	if (!diffArray) return diffArray;
+	diffArray.forEach((diff) => {
+		if (diff.path && Array.isArray(diff.path)) {
+			const key = diff.path.join('.');
+			if (leftFlat[key] && leftFlat[key].line != null) {
+				diff.leftLine = leftFlat[key].line;
+			}
+			if (rightFlat[key] && rightFlat[key].line != null) {
+				diff.rightLine = rightFlat[key].line;
+			}
+		}
+		// 만약 diff.kind === 'A' 등 추가 처리가 필요하면 여기에 추가
+	});
+	return diffArray;
+}
+
 // YAML 문자열 두 개를 비교하여 diff와 각 변경점이 속한 라인 번호 목록을 반환합니다.
 function getYamlDiff(leftYaml, rightYaml) {
 	// YAML 객체 파싱
@@ -204,13 +232,19 @@ function getYamlDiff(leftYaml, rightYaml) {
 	const rightObj = jsYaml.load(rightYaml);
 	const diffs = deepDiff.diff(leftObj, rightObj) || [];
 
-	console.log(diffs);
-
 	// AST 파싱 후 평탄화 진행
 	const leftAST = parseYamlAST(leftYaml);
 	const rightAST = parseYamlAST(rightYaml);
 	const leftFlat = flattenAST(leftAST, leftYaml);
 	const rightFlat = flattenAST(rightAST, rightYaml);
+
+	console.log(
+		addLineInfoToDiffs(
+			deepDiff.diff(transformObject(leftFlat), transformObject(rightFlat)),
+			leftFlat,
+			rightFlat,
+		),
+	);
 
 	// diff 객체에 라인 번호 주입
 	const resultDiff = annotateDiffsWithLine(diffs, leftFlat, rightFlat);
