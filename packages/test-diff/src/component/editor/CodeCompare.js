@@ -2,7 +2,7 @@ import React, {useState, useCallback, useEffect} from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import './CodeCompare.scss';
 import * as jsYaml from 'js-yaml';
-import useExtensionDiff from '../utils/useExtensionDiff';
+import useExtensionDiff from '../../utils/useExtensionDiff';
 
 const initialLeftText = `apiVersion: apps/v1
 kind: Deployment

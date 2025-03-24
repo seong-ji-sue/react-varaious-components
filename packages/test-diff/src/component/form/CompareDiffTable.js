@@ -5,9 +5,9 @@ import {
 	getCoreRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import TextBoxCell from '../cell/TextBoxCell';
-import DiffCell from '../cell/DiffCell';
-import {compareItems} from '../utils/diff';
+import TextBoxCell from '../../cell/TextBoxCell';
+import DiffCell from '../../cell/DiffCell';
+import {compareItems} from '../../utils/diff';
 
 // -------------------------------------------------------------------
 // 초기 데이터 (예시)

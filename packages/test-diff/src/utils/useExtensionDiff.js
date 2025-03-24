@@ -7,7 +7,7 @@ import {load as parseYamlAST, Kind} from 'yaml-ast-parser';
 import {assign, concat, forEach, pullAt, set, slice, unset} from 'lodash-es';
 import cleanDeep from 'clean-deep';
 import {yaml} from '@codemirror/lang-yaml';
-import './../component/CodeCompare.scss';
+import '../component/editor/CodeCompare.scss';
 
 const diffType = {
 	edit: 'E', //양쪽에 해당 key 값이 있는 경우
