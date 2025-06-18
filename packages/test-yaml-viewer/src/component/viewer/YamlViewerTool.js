@@ -75,12 +75,17 @@ const formatYaml = (data) => {
 
 const YamlViewerTool = () => {
 	const [yamlText, setYamlText] = useState('');
-	// JSON 트리뷰에 표시할 객체 상태
 	const [jsonData, setJsonData] = useState({});
-	// 현재 뷰 모드 (false: YAML View, true: Tree View)
 	const [isTreeView, setIsTreeView] = useState(false);
 
-	// 초기 YAML 텍스트 설정
+	const [showDialog, setShowDialog] = useState(false);
+	const [dialogFileName, setDialogFileName] = useState('');
+	const [dialogFileContent, setDialogFileContent] = useState('');
+
+	// 파일 업로드용
+	const fileInputRef = useRef(null);
+
+	// 초기 YAML 설정
 	useEffect(() => {
 		setYamlText(formatYaml(initialLeftText));
 	}, []);
@@ -88,34 +93,79 @@ const YamlViewerTool = () => {
 	// CodeMirror 확장
 	const extensions = useMemo(() => [yaml()], []);
 
-	// YAML → 파일 다운로드
+	// 파일 업로드 다이얼로그 열기
+	const handleOpenFileDialog = () => {
+		setShowDialog(true);
+		// 혹시 이전에 남아있을 수 있는 상태값 초기화
+		setDialogFileName('');
+		setDialogFileContent('');
+	};
+
+	// 다이얼로그 내에서 "browse" 또는 input 을 클릭하면 숨겨진 file input 트리거
+	const handleBrowseFile = () => {
+		if (fileInputRef.current) {
+			fileInputRef.current.value = ''; // 동일 파일 다시 열 때를 대비해 초기화
+			fileInputRef.current.click();
+		}
+	};
+
+	// 파일 선택 후 FileReader 로 읽기
+	const handleFileChange = (e) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		setDialogFileName(file.name);
+
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			const content = event.target?.result;
+			setDialogFileContent(typeof content === 'string' ? content : '');
+		};
+		reader.readAsText(file);
+	};
+
+	// 다이얼로그 확인 버튼 -> 에디터에 파일 내용 반영
+	const handleConfirmDialog = () => {
+		if (dialogFileContent) {
+			setYamlText(formatYaml(dialogFileContent));
+		}
+		setShowDialog(false);
+	};
+
+	// 다이얼로그 취소 버튼
+	const handleCancelDialog = () => {
+		setShowDialog(false);
+	};
+
+	// YAML 파일 다운로드
 	const handleDownload = useCallback(() => {
 		const blob = new Blob([yamlText], {type: 'application/octet-stream'});
 		FileSaver.saveAs(blob, 'exported.yaml');
 	}, [yamlText]);
 
-	// YAML → 클립보드 복사
+	// YAML 텍스트 복사
 	const handleCopy = useCallback(() => {
 		copy(yamlText);
 		alert('카피 되었습니다');
 	}, [yamlText]);
 
-	// YAML 내용 clear
+	// clear (YAML, JSON 모두 비움)
 	const handleClear = useCallback(() => {
 		setYamlText('');
+		setJsonData({});
 	}, []);
 
-	// react-json-view 에서 수정/삭제/추가가 일어났을 때 호출될 콜백
+	// JSON 수정/삭제/추가 콜백
 	const handleJsonChange = (edit) => {
 		if (edit.updated_src) {
 			setJsonData(edit.updated_src);
 		}
 	};
 
-	// "tree view" / "yaml view" 토글 버튼 클릭
-	const handleToggleView = () => {
+	// View 토글 (YAML <-> Tree)
+	const handleToggleView = useCallback(() => {
 		if (!isTreeView) {
-			// YAML View -> Tree View
+			// YAML -> Tree
 			try {
 				const parsed = jsYaml.load(yamlText);
 				setJsonData(parsed || {});
@@ -124,7 +174,7 @@ const YamlViewerTool = () => {
 				alert(`YAML 파싱 오류: ${err.message}`);
 			}
 		} else {
-			// Tree View -> YAML View
+			// Tree -> YAML
 			try {
 				const dumped = jsYaml.dump(jsonData);
 				setYamlText(dumped);
@@ -133,13 +183,27 @@ const YamlViewerTool = () => {
 				alert(`JSON -> YAML 변환 오류: ${err.message}`);
 			}
 		}
-	};
+	}, [isTreeView, yamlText, jsonData]);
 
 	return (
 		<div>
+			{/* 숨겨진 file input */}
+			<input
+				ref={fileInputRef}
+				type='file'
+				style={{display: 'none'}}
+				onChange={handleFileChange}
+			/>
+
 			{/* 상단 버튼들 */}
 			<div style={{marginBottom: '16px'}}>
-				<button>open file</button>
+				{/* YAML View 일 때만 파일 열기 가능, Tree View 시엔 비활성화 */}
+				<button
+					onClick={!isTreeView ? handleOpenFileDialog : undefined}
+					disabled={isTreeView}
+				>
+					open file
+				</button>
 				<button onClick={handleDownload}>download file</button>
 				<button onClick={handleCopy}>copy clipboard</button>
 				<button onClick={handleClear}>clear</button>
@@ -147,6 +211,63 @@ const YamlViewerTool = () => {
 					{isTreeView ? 'yaml view' : 'tree view'}
 				</button>
 			</div>
+
+			{showDialog && (
+				<div
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						width: '100%',
+						height: '100%',
+						backgroundColor: 'rgba(0,0,0,0.3)',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						zIndex: 1000,
+					}}
+				>
+					<div
+						style={{
+							backgroundColor: '#fff',
+							padding: '20px',
+							borderRadius: '8px',
+							minWidth: '300px',
+						}}
+					>
+						<h3>파일 업로드</h3>
+						{/* 파일명 입력란 (readOnly) */}
+						<input
+							type='text'
+							value={dialogFileName}
+							readOnly
+							placeholder='파일 이름'
+							onClick={handleBrowseFile}
+							style={{
+								width: '100%',
+								marginBottom: '10px',
+								cursor: 'pointer',
+								padding: '6px',
+							}}
+						/>
+						{/* 별도 browse 버튼 */}
+						<button onClick={handleBrowseFile}>browse</button>
+
+						<div
+							style={{
+								display: 'flex',
+								justifyContent: 'flex-end',
+								marginTop: '10px',
+							}}
+						>
+							<button onClick={handleConfirmDialog}>확인</button>
+							<button onClick={handleCancelDialog} style={{marginLeft: '8px'}}>
+								취소
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* YAML View */}
 			{!isTreeView && (
@@ -166,18 +287,18 @@ const YamlViewerTool = () => {
 						width: '700px',
 						minHeight: '500px',
 						border: '1px solid #ccc',
-						backgroundColor: '#2b2b2b', // react-json-view는 어두운 테마일 때 배경이 어두운 편이 잘 어울림
+						backgroundColor: '#2b2b2b',
 						color: '#fff',
 						padding: '8px',
 					}}
 				>
 					<ReactJson
 						src={jsonData}
-						theme='monokai' // 테마 (원하는 대로 변경 가능)
+						theme='monokai'
 						onEdit={handleJsonChange}
 						onAdd={handleJsonChange}
 						onDelete={handleJsonChange}
-						displayDataTypes={false} // 타입 표시 여부
+						displayDataTypes={false}
 						displayObjectSize={false}
 					/>
 				</div>
