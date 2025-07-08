@@ -1,11 +1,21 @@
-.container {
+.container_single {
+
   width: 300px;
 }
 
+.container_form{
+  display: flex;
+  flex-direction: column;
+}
 
+.text_input{
+  height: 20px;
+}
 
 .file_container_one {
   display: flex;
+  margin-top: 10px;
+  height: 30px;
 }
 
 .hidden_input {
@@ -14,7 +24,14 @@
 
 .input_box {
   width: 100%;
+  white-space: nowrap;
 }
+
+.open_file_button-single{
+  white-space: nowrap;
+  font-size: 12px;
+}
+
 .button_group_one {
   display: flex;
   justify-content: flex-end;

@@ -143,7 +143,7 @@ const MultiFileUpload = () => {
 			data.file.forEach((file) => {
 				formData.append('file', file);
 			});
-			await createFileMultiApi({});
+			await createFileMultiApi({file: formData});
 		} catch (e) {
 			console.log(e);
 		}
@@ -162,9 +162,9 @@ const MultiFileUpload = () => {
 							multiple
 						/>
 					</FormProvider>
-					<span className={'open_file_button'} onClick={onChangeButtonClick}>
+					<button className={'open_file_button'} onClick={onChangeButtonClick}>
 						파일 업로드
-					</span>
+					</button>
 					<span>
 						파일 업로드
 						{selectedFiles.length}개
