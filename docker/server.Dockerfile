@@ -7,7 +7,7 @@ ENV PYTHON python3
 WORKDIR /app
 
 COPY ../package*.json lerna.json ./
-COPY ../packages/server/package.json ./packages/server/
+COPY ../packages/server-bff/package.json ./packages/server/
 COPY ../packages/common ./packages/common/
 
 RUN yarn install
@@ -19,7 +19,7 @@ WORKDIR /app
 COPY ../package*.json lerna.json ./
 
 # COPY ./config/.env.production ./config/
-COPY ../packages/server ./packages/server
+COPY ../packages/server-bff ./packages/server
 
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/packages/server/node_modules ./packages/server/node_modules

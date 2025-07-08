@@ -1,5 +1,5 @@
 {
-  "name": "@jsproject/server",
+  "name": "@jsproject/server-bff",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

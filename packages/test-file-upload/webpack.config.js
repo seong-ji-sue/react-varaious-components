@@ -97,6 +97,11 @@ module.exports = () => {
 					},
 				},
 			}),
+			new webpack.DefinePlugin({
+				'process.env.BFF_SERVER__URL': JSON.stringify(
+					process.env.BFF_SERVER__URL,
+				),
+			}),
 		],
 	};
 	if (process.env.NODE_ENV === 'development') {

@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {useForm} from 'react-hook-form';
+import {FormProvider, useForm} from 'react-hook-form';
 import {
 	autoUpdate,
 	flip,
@@ -27,7 +27,7 @@ const SingleFileUpload = (props) => {
 		formState: {errors, isSubmitted},
 	} = methods;
 
-	const selectedFiles = watch(name, []);
+	const selectedFiles = watch(name);
 	console.log(selectedFiles);
 
 	const [isOpen, setIsOpen] = useState(false);
@@ -59,8 +59,21 @@ const SingleFileUpload = (props) => {
 		const files = event.target && event.target.files;
 		if (files && files[0]) {
 			setFileName(event.target.files[0].name);
+			setValue(name, event.target.files[0]);
 		}
 	}, []);
+
+	const onClickSubmitFile = async (data) => {
+		console.log(data);
+		try {
+			// const formData = new FormData();
+			// data.file.forEach((file) => {
+			// 	formData.append('file', file);
+			// });
+		} catch (e) {
+			console.log(e);
+		}
+	};
 
 	useEffect(() => {
 		fileInputRef.current.addEventListener('input', fileInputHandler);
@@ -69,14 +82,21 @@ const SingleFileUpload = (props) => {
 	return (
 		<div className={'container'}>
 			<div className={'file_container_one'}>
-				<input className={'hidden_input'} type={'file'} ref={fileInputRef} />
-				<input className={'input_box'} value={fileName} readOnly={true} />
+				<FormProvider {...methods}>
+					<input className={'hidden_input'} type={'file'} ref={fileInputRef} />
+				</FormProvider>
+				<input
+					className={'input_box'}
+					type={'text'}
+					value={fileName}
+					readOnly={true}
+				/>
 				<span className={'open_file_button'} onClick={onChangeButtonClick}>
 					파일 업로드
 				</span>
 			</div>
 			<div className={'button_group_one'}>
-				<button>전송</button>
+				<button onClick={onClickSubmitFile}>전송</button>
 			</div>
 		</div>
 	);

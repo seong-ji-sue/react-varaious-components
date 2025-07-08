@@ -12,6 +12,7 @@ import {
 	useInteractions,
 	useRole,
 } from '@floating-ui/react';
+import {createFileMultiApi} from '../../apis/file';
 
 const name = 'file';
 
@@ -135,10 +136,14 @@ const MultiFileUpload = () => {
 		console.log(data);
 		try {
 			const formData = new FormData();
+			if (!data?.file || data.file.length === 0) {
+				alert('파일 업로드 해주세요');
+				return;
+			}
 			data.file.forEach((file) => {
 				formData.append('file', file);
 			});
-			console.log(formData);
+			await createFileMultiApi({});
 		} catch (e) {
 			console.log(e);
 		}
