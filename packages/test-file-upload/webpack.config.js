@@ -6,8 +6,13 @@ const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
 
 module.exports = () => {
-	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
+	dotenv.config({path: `../../.env.${process.env.NODE_ENV}`});
 	console.log('WEBPACK - NODE_ENV: ----->' + process.env.NODE_ENV);
+	console.log('WEBPACK - BFF_SERVER_URL: ----->' + process.env.BFF_SERVER_URL);
+	console.log(
+		'WEBPACK - FILE_UPLOAD_TEST_SERVER_PORT: ----->' +
+			process.env.FILE_UPLOAD_TEST_SERVER_PORT,
+	);
 
 	const common = {
 		mode: `development`,
@@ -18,7 +23,7 @@ module.exports = () => {
 		output: {
 			path: path.resolve(__dirname, 'dist'),
 			filename: 'app.js',
-			publicPath: `${process.env.FILE_UPLOAD_TEST_SERVER_URL}/`,
+			publicPath: `/`,
 			clean: true,
 		},
 		module: {
@@ -98,8 +103,8 @@ module.exports = () => {
 				},
 			}),
 			new webpack.DefinePlugin({
-				'process.env.BFF_SERVER__URL': JSON.stringify(
-					process.env.BFF_SERVER__URL,
+				'process.env.BFF_SERVER_URL': JSON.stringify(
+					process.env.BFF_SERVER_URL,
 				),
 			}),
 		],
@@ -114,6 +119,8 @@ module.exports = () => {
 			historyApiFallback: true,
 			headers: {
 				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Methods':
+					'GET, POST, OPTIONS, PUT, PATCH, DELETE',
 			},
 		};
 	} else {

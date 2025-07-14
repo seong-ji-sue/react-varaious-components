@@ -6,7 +6,7 @@ const webpack = require('webpack');
 const {ModuleFederationPlugin} = webpack.container;
 
 module.exports = () => {
-	dotenv.config({path: `../../config/.env.${process.env.NODE_ENV}`});
+	dotenv.config({path: `../../.env.${process.env.NODE_ENV}`});
 	console.log('WEBPACK - NODE_ENV: ----->' + process.env.NODE_ENV);
 
 	const common = {

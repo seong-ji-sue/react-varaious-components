@@ -7,18 +7,18 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - ./config/.env.production
+      - .env.production
   page:
     image: page:latest
     container_name: page
     ports:
       - "4002:4002"
     env_file:
-      - ./config/.env.production
+      - .env.production
   server:
     image: server:latest
     container_name: server
     ports:
       - "5000:5000"
     env_file:
-      - ./config/.env.production
+      - .env.production

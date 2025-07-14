@@ -8,7 +8,7 @@ services:
       - "4001:4001"
     # restart: always
     env_file:
-      - path: ./config/.env.production
+      - path: ./.env.production
         required: true
 
 

@@ -1,55 +1,30 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {FormProvider, useForm} from 'react-hook-form';
-import {
-	autoUpdate,
-	flip,
-	offset,
-	shift,
-	useDismiss,
-	useFloating,
-	useHover,
-	useInteractions,
-	useRole,
-} from '@floating-ui/react';
 import './SingleFileUpload.scss';
 import {createFileSingleApi} from '../../apis/file';
 
 const name = 'file';
 const input = 'text';
-const SingleFileUpload = (props) => {
-	const methods = useForm();
+const SingleFileUpload = () => {
+	const methods = useForm({
+		defaultValues: {
+			text: '',
+			file: null,
+		},
+	});
+
+	const {register, handleSubmit, setValue, watch} = methods;
+
+	const currentSelectedFile = watch(name);
 
 	const [fileName, setFileName] = useState('');
 
-	const {
-		register,
-		reset,
-		setValue,
-		watch,
-		clearErrors,
-		formState: {errors, isSubmitted},
-	} = methods;
-
-	const selectedFiles = watch(name);
-
-	const [isOpen, setIsOpen] = useState(false);
 	const fileInputRef = useRef(null);
 
-	const {refs, floatingStyles, context} = useFloating({
-		open: isOpen,
-		onOpenChange: setIsOpen,
-		placement: 'bottom-start',
-		whileElementsMounted: autoUpdate,
-		middleware: [offset(5), flip(), shift()],
-	});
-	const hover = useHover(context, {move: false});
-	const dismiss = useDismiss(context);
-	const role = useRole(context, {role: 'tooltip'});
-	const {getReferenceProps, getFloatingProps} = useInteractions([
-		hover,
-		dismiss,
-		role,
-	]);
+	const processFile = (file) => {
+		setFileName(file.name);
+		setValue(name, file);
+	};
 
 	const onChangeButtonClick = () => {
 		if (fileInputRef.current) {
@@ -57,13 +32,27 @@ const SingleFileUpload = (props) => {
 		}
 	};
 
-	const fileInputHandler = useCallback((event) => {
-		const files = event.target && event.target.files;
+	const handleFileInputChange = (e) => {
+		const files = e.target.files;
+		setFileName(files[0].name);
+		setValue(name, files[0]);
+	};
+
+	const handleDragEnter = (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
+	const handleDrop = (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		const files = e.dataTransfer.files;
 		if (files && files[0]) {
-			setFileName(event.target.files[0].name);
-			setValue(name, event.target.files[0]);
+			setFileName(files[0].name);
+			setValue(name, files[0]);
 		}
-	}, []);
+	};
 
 	const buildFormData = (data) => {
 		console.log(data);
@@ -71,59 +60,50 @@ const SingleFileUpload = (props) => {
 
 		formData.append('data', JSON.stringify({data: data.text}));
 		formData.append(data.file.type, data.file);
+		for (const pair of formData.entries()) {
+			console.log(pair[0] + ': ' + pair[1]);
+		}
+		return formData;
 	};
-
-	// const onChangeFile = (e, initialFile) => {
-	// 	const file = initialFile ? initialFile : e.target.files[0];
-	// 	const fileReader = new FileReader();
-	//
-	// 	if (!file) {
-	// 		return;
-	// 	} else {
-	// 		fileReader.readAsText(file);
-	// 	}
-	//
-	// 	setFileName(file.name);
-	//
-	// 	console.log('onChangeFile', file);
-	// 	// fileReader.onload = async () => {
-	// 	// 	setValue(`${name}.name`, file.name);
-	// 	// 	setValue(`${name}.result`, fileReader.result);
-	// 	// 	setValue(`${name}.uploadedFile`, file);
-	// 	//
-	// 	// 	setValue(`${name}.size`, file.size);
-	// 	// };
-	// };
 
 	const onClickSubmitFile = async (data) => {
 		try {
 			const formData = buildFormData(data);
-			await createFileSingleApi({file: formData});
+			await createFileSingleApi({data: formData});
 		} catch (e) {
 			console.log(e);
 		}
 	};
 
-	useEffect(() => {
-		fileInputRef.current.addEventListener('input', fileInputHandler);
-	}, [fileInputRef, fileInputHandler]);
-
 	return (
 		<div className={'container_single'}>
 			<FormProvider {...methods}>
 				<div className={'container_form'}>
-					<input {...register(input)} className={'text_input'} type={'text'} />
-					<div className={'file_container_one'}>
+					<input
+						{...register(input)}
+						className={'text_input'}
+						type={'text'}
+						placeholder={'텍스트를 입력해주세요~!'}
+					/>
+					<div
+						className={'file_container_one'}
+						onDragEnter={handleDragEnter}
+						onDragLeave={handleDragEnter}
+						onDragOver={handleDragEnter}
+						onDrop={handleDrop}
+					>
 						<input
 							className={'hidden_input'}
 							type={'file'}
 							ref={fileInputRef}
+							onChange={handleFileInputChange}
 						/>
 
 						<input
 							className={'input_box'}
 							type={'text'}
 							value={fileName}
+							placeholder={'파일을 업로드 해주세요~!'}
 							readOnly={true}
 						/>
 						<button

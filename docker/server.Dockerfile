@@ -18,7 +18,7 @@ WORKDIR /app
 
 COPY ../package*.json lerna.json ./
 
-# COPY ./config/.env.production ./config/
+# COPY ./.env.production ./config/
 COPY ../packages/server-bff ./packages/server
 
 COPY --from=base /app/node_modules ./node_modules

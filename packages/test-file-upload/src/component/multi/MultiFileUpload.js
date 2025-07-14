@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import './MultiFileUpload.scss';
 import {FormProvider, useForm} from 'react-hook-form';
 import {
@@ -12,7 +12,7 @@ import {
 	useInteractions,
 	useRole,
 } from '@floating-ui/react';
-import {createFileMultiApi} from '../../apis/file';
+import {createFileMultiApi, findAllTestData} from '../../apis/file';
 
 const name = 'file';
 
@@ -148,6 +148,19 @@ const MultiFileUpload = () => {
 			console.log(e);
 		}
 	};
+
+	const getData = async () => {
+		try {
+			const data = await findAllTestData();
+			console.log(data.data);
+		} catch (e) {
+			console.log();
+		}
+	};
+
+	useEffect(() => {
+		getData();
+	}, []);
 
 	return (
 		<div className={'container'}>

@@ -1,3 +1,4 @@
-import file from './file/index.js';
+import file from './file';
+import test from './test';
 
-export default {file};
+export default {file, test};

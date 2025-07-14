@@ -15,5 +15,5 @@ app.get('*', (req, res) => {
 });
 
 http.createServer(app).listen(port, () => {
-	console.log(`Server is running on port ${port}`);
+	console.log(`Front Server is running on port ${port}`);
 });

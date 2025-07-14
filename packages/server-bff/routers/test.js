@@ -5,7 +5,6 @@ import controllers from '../controllers';
 
 const router = express.Router();
 
-router.post('/multi', middleware, wrapAsync(controllers.file.multi.create));
-router.post('/single', middleware, wrapAsync(controllers.file.single.create));
+router.get('/', middleware, wrapAsync(controllers.test.findAll));
 
 export default router;

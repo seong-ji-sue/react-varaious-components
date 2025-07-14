@@ -1,5 +1,5 @@
-import multi from './multi.js';
-import single from './single.js';
+import multi from './multi';
+import single from './single';
 
 export default {
 	multi,

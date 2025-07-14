@@ -1,4 +1,4 @@
-import apis from '../../apis/index.js';
+import apis from '../../apis';
 
 const create = async (req, res) => {
 	const data = await apis.file.single.create({data: {}});
