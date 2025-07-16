@@ -5,6 +5,19 @@ import {createFileSingleApi} from '../../apis/file';
 
 const name = 'file';
 const input = 'text';
+
+const buildFormData = (data) => {
+	console.log(data);
+	const formData = new FormData();
+
+	formData.append('data', JSON.stringify({text: data.text}));
+	formData.append('file', data.file);
+	for (const pair of formData.entries()) {
+		console.log(pair[0] + ': ' + pair[1]);
+	}
+	return formData;
+};
+
 const SingleFileUpload = () => {
 	const methods = useForm({
 		defaultValues: {
@@ -14,17 +27,8 @@ const SingleFileUpload = () => {
 	});
 
 	const {register, handleSubmit, setValue, watch} = methods;
-
-	const currentSelectedFile = watch(name);
-
 	const [fileName, setFileName] = useState('');
-
 	const fileInputRef = useRef(null);
-
-	const processFile = (file) => {
-		setFileName(file.name);
-		setValue(name, file);
-	};
 
 	const onChangeButtonClick = () => {
 		if (fileInputRef.current) {
@@ -54,21 +58,10 @@ const SingleFileUpload = () => {
 		}
 	};
 
-	const buildFormData = (data) => {
-		console.log(data);
-		const formData = new FormData();
-
-		formData.append('data', JSON.stringify({data: data.text}));
-		formData.append(data.file.type, data.file);
-		for (const pair of formData.entries()) {
-			console.log(pair[0] + ': ' + pair[1]);
-		}
-		return formData;
-	};
-
 	const onClickSubmitFile = async (data) => {
 		try {
 			const formData = buildFormData(data);
+			console.log(formData);
 			await createFileSingleApi({data: formData});
 		} catch (e) {
 			console.log(e);

@@ -4,7 +4,7 @@ export const createFileMultiApi = async (params) => {
 	return await Axios.post(`/server/file/multi`, {...params});
 };
 
-export const createFileSingleApi = async (data) => {
+export const createFileSingleApi = async ({data}) => {
 	return await Axios.post(`/server/file/single`, data);
 };
 
