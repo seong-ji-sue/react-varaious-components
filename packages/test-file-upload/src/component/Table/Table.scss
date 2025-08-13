@@ -1,0 +1,41 @@
+
+
+table {
+  border: 1px solid black;
+  border-redius:4px;
+  table-layout: fixed;
+  height: fit-content;
+  border-spacing: 0;
+  margin: 0;
+
+  .tbody {
+    height: fit-content;
+  }
+}
+
+thead {
+  border-bottom: 1px solid black;
+  background-color: lightblue;
+
+  z-index: 0 !important;
+}
+
+
+th, td {
+  box-sizing: border-box;
+
+  padding: 0 12px;
+  border-bottom: 1px solid black;
+  border-left:  1px solid black;
+  font-size: 18px;
+  background-color: transparent;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+th:first-child,
+td:first-child {
+  border-left: none;
+}
