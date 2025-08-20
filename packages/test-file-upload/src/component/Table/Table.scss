@@ -1,41 +1,47 @@
+/* Table.scss */
 
+/* 테이블 전체를 감싸는 컨테이너 */
+.table-container {
+  width: 100%;
+  height: 400px;
+  overflow: auto;
+  border: 1px solid black;
+  border-radius: 4px;
+}
 
 table {
-  border: 1px solid black;
-  border-redius:4px;
-  table-layout: fixed;
-  height: fit-content;
+  width: 100%;
+  border-collapse: collapse;
   border-spacing: 0;
-  margin: 0;
-
-  .tbody {
-    height: fit-content;
-  }
 }
 
 thead {
-  border-bottom: 1px solid black;
+  position: sticky;
+  top: 0;
   background-color: lightblue;
-
-  z-index: 0 !important;
+  z-index: 2;
 }
 
-
-th, td {
+th,
+td {
   box-sizing: border-box;
-
+  min-width: 150px;
+  height: 50px;
   padding: 0 12px;
-  border-bottom: 1px solid black;
-  border-left:  1px solid black;
+  border: 1px solid black;
   font-size: 18px;
   background-color: transparent;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
-
-th:first-child,
-td:first-child {
-  border-left: none;
-}
+///* data-id가 "name"인 칼럼을 고정 */
+//th[data-id="name"],
+//td[data-id="name"] {
+//  position: sticky; /* 위치 고정 */
+//  left: 0; /* 왼쪽에 붙이기 */
+//  z-index: 1; /* 스크롤되는 셀들보다 위에 오도록 설정 */
+//  background-color: lightblue; /* 배경색 설정 */
+//}
