@@ -1,5 +1,7 @@
 import React, {useMemo} from 'react';
 import Table from '../Table';
+import ExPage from '@jsproject/test-mui/src/ExPage';
+import Export from '../export/Export';
 
 const data = [
 	{
@@ -165,7 +167,12 @@ const TableTest = () => {
 		[],
 	);
 
-	return <Table {...props} />;
+	return (
+		<div>
+			<Export {...props} />
+			<Table {...props} />
+		</div>
+	);
 };
 
 export default TableTest;

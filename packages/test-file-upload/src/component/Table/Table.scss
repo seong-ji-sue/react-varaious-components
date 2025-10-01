@@ -1,6 +1,4 @@
-/* Table.scss */
 
-/* 테이블 전체를 감싸는 컨테이너 */
 .table-container {
   width: 100%;
   height: 400px;
@@ -11,7 +9,7 @@
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
   border-spacing: 0;
 }
 
@@ -36,12 +34,3 @@ td {
   white-space: nowrap;
   vertical-align: middle;
 }
-
-///* data-id가 "name"인 칼럼을 고정 */
-//th[data-id="name"],
-//td[data-id="name"] {
-//  position: sticky; /* 위치 고정 */
-//  left: 0; /* 왼쪽에 붙이기 */
-//  z-index: 1; /* 스크롤되는 셀들보다 위에 오도록 설정 */
-//  background-color: lightblue; /* 배경색 설정 */
-//}
