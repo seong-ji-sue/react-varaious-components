@@ -46,6 +46,26 @@ const Table = ({data, columns}) => {
 		onColumnPinningChange: setColumnPinning,
 	});
 
+	const exportTableData = () => {
+		const finalRows = table.getRowModel().rows;
+
+		const columnIds = table.getVisibleFlatColumns().map((column) => column.id);
+
+		// 3. 데이터를 변환합니다. (행의 배열 -> 행별 셀 값 배열)
+		const tableArr = finalRows.map((row) => {
+			const rowArray = row.getVisibleCells().map((cell) => {
+				return cell.getValue();
+			});
+
+			return rowArray;
+		});
+
+		// 5. 콘솔에 출력합니다.
+		console.log('tableArr', tableArr);
+	};
+
+	exportTableData();
+
 	return (
 		<div className='table-container'>
 			<table style={{width: table.getTotalSize()}}>

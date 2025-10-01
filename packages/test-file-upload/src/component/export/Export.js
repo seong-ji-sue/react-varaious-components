@@ -1,7 +1,6 @@
 import React, {useCallback} from 'react';
 import * as FileSaver from 'file-saver';
 import {jsPDF} from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 const pdfHeadStyle = {
 	fillColor: [68, 60, 109], // 어두운 보라색 계열
@@ -12,8 +11,9 @@ const pdfHeadStyle = {
 const malgunBase64Font = '';
 
 const getTableData = (data, columns) => {
+	const filteredColumns = columns.filter((col) => col.accessorKey !== 'name');
 	// 1. 헤더 추출
-	const tableHead = [columns.map((v) => v.header)];
+	const tableHead = [filteredColumns.map((v) => v.header)];
 
 	// 2. 바디 데이터 추출 및 정렬
 	const tableArr = data.map((row) =>
@@ -23,6 +23,8 @@ const getTableData = (data, columns) => {
 			return val || '';
 		}),
 	);
+
+	console.log('tableArr', tableArr);
 
 	return {
 		tableHead: tableHead,
